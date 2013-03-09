@@ -172,6 +172,9 @@ if options[:slave]
       puts "Envoi des constantes d'installation…"
       `scp -P #{PORT_SSH_SLAVE} const.rb #{HOST_SLAVE}:#{INSTALL_FOLDER}`
 
+      puts "Envoi du script de configuration du serveur secondaire…"
+      `scp -P #{PORT_SSH_SLAVE} slave.rb #{HOST_SLAVE}:#{INSTALL_FOLDER}`
+
       puts "Installation de Ruby…"
       `ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} yum -y install ruby`
     end
@@ -180,6 +183,10 @@ if options[:slave]
       puts "Installation de PostgreSQL…"
       system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/init_psql.rb")
     end
+
+    puts "Configuration du serveur esclave…"
+    system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/slave.rb")
+
   }
 end
 

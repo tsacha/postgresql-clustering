@@ -10,5 +10,5 @@ STDOUT.sync = true
 
 Dir.chdir(PSQL_FOLDER)
 
-FileUtils.rm_r(PSQL_FOLDER+"/data") if FileTest.directory?('./data/')
+FileUtils.rm_r("./data") if FileTest.directory?('./data/')
 system("su - #{PSQL_USER} -c '#{PSQL_FOLDER}/bin/initdb #{PSQL_FOLDER}/data/'")
