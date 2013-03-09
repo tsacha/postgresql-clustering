@@ -187,6 +187,26 @@ if options[:slave]
     puts "Configuration du serveur esclave…"
     system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/slave.rb")
 
+    puts "Réécriture des fichiers de configuration PostgreSQL…"
+    FileUtils.cp(INSTALL_FOLDER+'/slave/postgresql.conf.template',INSTALL_FOLDER+'/slave/postgresql.conf')
+    FileUtils.cp(INSTALL_FOLDER+'/slave/pg_hba.conf.template',INSTALL_FOLDER+'/slave/pg_hba.conf')
+    FileUtils.cp(INSTALL_FOLDER+'/slave/recovery.conf.template',INSTALL_FOLDER+'/slave/recovery.conf')
+
+    file_names = [INSTALL_FOLDER+'/slave/postgresql.conf', INSTALL_FOLDER+'/slave/pg_hba.conf', INSTALL_FOLDER+'/slave/recovery.conf']
+    
+    file_names.each do |file_name|
+      replace = File.read(file_name)
+      replace = replace.gsub(/HOST_MASTER_IP/, HOST_MASTER_IP)
+      replace = replace.gsub(/HOST_MASTER/, HOST_MASTER)
+      replace = replace.gsub(/PORT_PSQL_MASTER/, PORT_PSQL_MASTER)
+      replace = replace.gsub(/PORT_PSQL_SLAVE/, PORT_PSQL_SLAVE)
+      replace = replace.gsub(/PORT_SSH_SLAVE/, PORT_SSH_SLAVE)
+      replace = replace.gsub(/PSQL_USER/, PSQL_USER)
+      replace = replace.gsub(/PSQL_FOLDER/, PSQL_FOLDER)
+      replace = replace.gsub(/HOT_STANDBY_SLAVE/, HOT_STANDBY_SLAVE)
+      File.open(file_name, "w") { |file| file.puts replace }
+    end
+
   }
 end
 

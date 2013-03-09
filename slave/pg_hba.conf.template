@@ -91,5 +91,5 @@ host    all         all         192.168.122.0/24      trust
 # Allow replication connections from localhost, by a user with the
 # replication privilege.
 #local   replication     postgres                                trust
-host    replication     replication        192.168.122.226/32            trust
+host    replication     replication      HOST_MASTER_IP/32	 trust
 #host    replication     postgres        ::1/128                 trust

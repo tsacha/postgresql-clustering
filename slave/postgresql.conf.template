@@ -60,7 +60,7 @@ listen_addresses = '*'		# what IP address(es) to listen on;
 					# comma-separated list of addresses;
 					# defaults to 'localhost'; use '*' for all
 					# (change requires restart)
-port = 5433				# (change requires restart)
+port = PORT_PSQL_SLAVE			# (change requires restart)
 max_connections = 100			# (change requires restart)
 # Note:  Increasing max_connections costs ~400 bytes of shared memory per
 # connection slot, plus lock space (see max_locks_per_transaction).
@@ -188,9 +188,9 @@ wal_level = hot_standby  # minimal, archive, or hot_standby
 
 # - Archiving -
 
-archive_mode = on		# allows archiving to be done
+# archive_mode = on		# allows archiving to be done
 				# (change requires restart)
-archive_command = 'scp %p postgres@vm3:/srv/vm1_wals/%f'		# command to use to archive a logfile segment
+# archive_command = 'scp %p postgres@vm3:/srv/vm1_wals/%f'		# command to use to archive a logfile segment
 				# placeholders: %p = path of file to archive
 				#               %f = file name only
 				# e.g. 'test ! -f /mnt/server/archivedir/%f && cp %p /mnt/server/archivedir/%f'
@@ -224,7 +224,7 @@ max_wal_senders = 10		# max number of walsender processes
 
 # These settings are ignored on a master server.
 
-hot_standby = on			# "on" allows queries during recovery
+hot_standby = HOT_STANDBY_SLAVE		# "on" allows queries during recovery
 					# (change requires restart)
 #max_standby_archive_delay = 30s	# max delay before canceling queries
 					# when reading WAL from archive;
@@ -305,7 +305,7 @@ logging_collector = on			# Enable capturing of stderr and csvlog
 # These are only used if logging_collector is on:
 log_directory = 'pg_log'		# directory where log files are written,
 					# can be absolute or relative to PGDATA
-log_filename = 'postgresql-%a.log'	# log file name pattern,
+log_filename = 'postgresql-%u.log'	# log file name pattern,
 					# can include strftime() escapes
 #log_file_mode = 0600			# creation mode for log files,
 					# begin with 0 to use octal notation
