@@ -47,12 +47,6 @@ OptionParser.new do |opts|
 
 end.parse!
 
-puts
-puts "------"
-puts "Exécution du script d'installation de PosgreSQL"
-puts "------"
-puts
-
 if options[:reset]
   puts "Réinitialisation des serveurs…"
 
@@ -116,6 +110,14 @@ if options[:reset]
   exit 0
 end
 
+puts
+puts "------"
+puts "Exécution du script d'installation de PosgreSQL"
+puts "------"
+puts
+
+puts "Génération de la clé SSH commune…"
+system("ssh-keygen -f #{INSTALL_FOLDER}/ssh/id_rsa -N ''")
 
 if options[:master]
   master = Thread.new() {
@@ -143,15 +145,16 @@ if options[:master]
     if options[:install]
       puts "Installation de PostgreSQL…"
       system("ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} ruby #{INSTALL_FOLDER}/init_psql.rb")
+
+      puts "Envoi de la clé SSH commune au serveur maître"
+      `scp -P #{PORT_SSH_MASTER} #{INSTALL_FOLDER}/ssh/id_rsa #{HOST_MASTER}:#{PSQL_FOLDER}/.ssh/` 
+      `scp -P #{PORT_SSH_MASTER} #{INSTALL_FOLDER}/ssh/id_rsa.pub #{HOST_MASTER}:#{PSQL_FOLDER}/.ssh/` 
+      `ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} 'cp #{PSQL_FOLDER}/.ssh/id_rsa.pub #{PSQL_FOLDER}/.ssh/authorized_keys; chown -R postgres:postgres #{PSQL_FOLDER}/.ssh'`
     end
     
     if options[:config]
       puts "Configuration du serveur maître…"
       system("ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} ruby #{INSTALL_FOLDER}/master.rb")
-
-      puts "Récupération de la clé SSH du serveur maître…"
-      `scp -P #{PORT_SSH_MASTER} #{HOST_MASTER}:#{PSQL_FOLDER}/.ssh/id_rsa.pub #{INSTALL_FOLDER}/master/`
-      FileUtils.move INSTALL_FOLDER+'/master/id_rsa.pub', INSTALL_FOLDER+'/master/authorized_keys'
 
       puts "Réécriture des fichiers de configuration PostgreSQL…"
       FileUtils.cp(INSTALL_FOLDER+'/master/postgresql.conf.template',INSTALL_FOLDER+'/master/postgresql.conf')
@@ -170,15 +173,16 @@ if options[:master]
         replace = replace.gsub(/PSQL_FOLDER/, PSQL_FOLDER)
         replace = replace.gsub(/SYNC_MASTER/, SYNC_MASTER)
         File.open(file_name, "w") { |file| file.puts replace }
-
         `scp -P #{PORT_SSH_MASTER} #{file_name} #{HOST_MASTER}:#{PSQL_FOLDER}/data/#{File.basename(file_name)}`
       end
+
+      puts "Récupération de la base de données du serveur maître…"
     end
     
-    if options[:launch]
-      puts "Lancement de PostgreSQL…"
-      system("ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} ruby #{INSTALL_FOLDER}/master_launch.rb")
-    end
+#    if options[:launch]
+#      puts "Lancement de PostgreSQL…"
+#      system("ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} ruby #{INSTALL_FOLDER}/master_launch.rb")
+#    end
   }
 end
 
@@ -209,6 +213,10 @@ if options[:slave]
     if options[:install]
       puts "Installation de PostgreSQL…"
       system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/init_psql.rb")
+      puts "Envoi de la clé SSH commune au serveur esclave"
+      `scp -P #{PORT_SSH_SLAVE} #{INSTALL_FOLDER}/ssh/id_rsa #{HOST_SLAVE}:#{PSQL_FOLDER}/.ssh/` 
+      `scp -P #{PORT_SSH_SLAVE} #{INSTALL_FOLDER}/ssh/id_rsa.pub #{HOST_SLAVE}:#{PSQL_FOLDER}/.ssh/` 
+      `ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} 'cp #{PSQL_FOLDER}/.ssh/id_rsa.pub #{PSQL_FOLDER}/.ssh/authorized_keys; chown -R postgres:postgres #{PSQL_FOLDER}/.ssh'`
     end
 
     if options[:config]
@@ -217,11 +225,7 @@ if options[:slave]
 
       puts "Configuration du serveur esclave…"
       system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/slave.rb")
-      
-      puts "Importation de la clé SSH du serveur maître…"
-      `scp -P #{PORT_SSH_SLAVE} master/authorized_keys #{HOST_SLAVE}:#{PSQL_FOLDER}/.ssh/`
 
-      
       puts "Réécriture des fichiers de configuration PostgreSQL…"
       FileUtils.cp(INSTALL_FOLDER+'/slave/postgresql.conf.template',INSTALL_FOLDER+'/slave/postgresql.conf')
       FileUtils.cp(INSTALL_FOLDER+'/slave/pg_hba.conf.template',INSTALL_FOLDER+'/slave/pg_hba.conf')
@@ -247,7 +251,7 @@ if options[:slave]
     
     if options[:launch]
       puts "Lancement de PostgreSQL…"
-      system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/slave_launch.rb")
+#      system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/slave_launch.rb")
     end
   }
 end
@@ -272,6 +276,10 @@ if options[:pgpool]
     if options[:install]
       puts "Installation de PostgreSQL…"
       system("ssh #{HOST_PGPOOL} -p #{PORT_SSH_PGPOOL} ruby #{INSTALL_FOLDER}/init_psql.rb")
+      puts "Envoi de la clé SSH commune au serveur pgPool"
+      `scp -P #{PORT_SSH_PGPOOL} #{INSTALL_FOLDER}/ssh/id_rsa #{HOST_PGPOOL}:#{PSQL_FOLDER}/.ssh/` 
+      `scp -P #{PORT_SSH_PGPOOL} #{INSTALL_FOLDER}/ssh/id_rsa.pub #{HOST_PGPOOL}:#{PSQL_FOLDER}/.ssh/` 
+      `ssh #{HOST_PGPOOL} -p #{PORT_SSH_PGPOOL} 'cp #{PSQL_FOLDER}/.ssh/id_rsa.pub #{PSQL_FOLDER}/.ssh/authorized_keys; chown -R postgres:postgres #{PSQL_FOLDER}/.ssh'`
     end
   }
 end

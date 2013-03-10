@@ -15,10 +15,10 @@ FileUtils.rm_r("./data") if FileTest.directory?('./data/')
 
 system("su - #{PSQL_USER} -c '#{PSQL_FOLDER}/bin/initdb #{PSQL_FOLDER}/data/'")
 
+system("su - #{PSQL_USER} -c '#{PSQL_FOLDER}/bin/pg_ctl -D #{PSQL_FOLDER}/data/ start > logfile 2>&1'")
 
-FileUtils.rm_r("./.ssh") if FileTest.directory?('./.ssh/')
-`su - #{PSQL_USER} -c 'ssh-keygen -f ~/.ssh/id_rsa -N ""'`
-
+`su - #{PSQL_USER} -c '#{PSQL_FOLDER}/bin/psql -U postgres -p #{PORT_PSQL_MASTER} -c "CREATE USER replication REPLICATION LOGIN ENCRYPTED PASSWORD 'replication';"'`
+system("#{PSQL_FOLDER}/bin/pg_basebackup -U postgres -D - -P -Ft | bzip2 > /tmp/pg_basebackup.tar.bz2")
 # TODO
 # Création de l'utilsateur réplication
 # start backup
