@@ -6,3 +6,4 @@ slave/postgresql.conf
 slave/pg_hba.conf
 slave/recovery.conf
 master/authorized_keys
+ssh/
