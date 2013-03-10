@@ -13,6 +13,9 @@ Dir.chdir(PSQL_FOLDER)
 FileUtils.rm_r("./data") if FileTest.directory?('./data/')
 `killall -9 postgres`
 
+# TODO
+# Récupération de l'archive
+# Décompression
 
 FileUtils.mkdir_p(PSQL_FOLDER+'/'+HOST_MASTER) if not FileTest.directory?(PSQL_FOLDER+'/'+HOST_MASTER)
 

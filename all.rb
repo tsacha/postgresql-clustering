@@ -212,8 +212,15 @@ if options[:slave]
     end
 
     if options[:config]
+
+      master.join
+
       puts "Configuration du serveur esclave…"
       system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/slave.rb")
+      
+      puts "Importation de la clé SSH du serveur maître…"
+      `scp -P #{PORT_SSH_SLAVE} master/authorized_keys #{HOST_SLAVE}:#{PSQL_FOLDER}/.ssh/`
+
       
       puts "Réécriture des fichiers de configuration PostgreSQL…"
       FileUtils.cp(INSTALL_FOLDER+'/slave/postgresql.conf.template',INSTALL_FOLDER+'/slave/postgresql.conf')
@@ -236,10 +243,6 @@ if options[:slave]
         
         `scp -P #{PORT_SSH_SLAVE} #{file_name} #{HOST_SLAVE}:#{PSQL_FOLDER}/data/#{File.basename(file_name)}`
       end
-
-      master.join
-      puts "Importation de la clé SSH du serveur maître…"
-      `scp -P #{PORT_SSH_SLAVE} master/authorized_keys #{HOST_SLAVE}:#{PSQL_FOLDER}/.ssh/`
     end
     
     if options[:launch]

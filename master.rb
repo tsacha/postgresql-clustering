@@ -17,6 +17,11 @@ system("su - #{PSQL_USER} -c '#{PSQL_FOLDER}/bin/initdb #{PSQL_FOLDER}/data/'")
 
 
 FileUtils.rm_r("./.ssh") if FileTest.directory?('./.ssh/')
-
-
 `su - #{PSQL_USER} -c 'ssh-keygen -f ~/.ssh/id_rsa -N ""'`
+
+# TODO
+# Création de l'utilsateur réplication
+# start backup
+# tar
+# stop backup
+# tar >> host
