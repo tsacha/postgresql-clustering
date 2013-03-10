@@ -116,8 +116,10 @@ puts "Exécution du script d'installation de PosgreSQL"
 puts "------"
 puts
 
-puts "Génération de la clé SSH commune…"
-system("ssh-keygen -f #{INSTALL_FOLDER}/ssh/id_rsa -N ''")
+if (options[:reset]) || (not File.exists?(INSTALL_FOLDER+'/ssh/id_rsa'))
+  puts "Génération de la clé SSH commune…"
+  system("ssh-keygen -f #{INSTALL_FOLDER}/ssh/id_rsa -N ''")
+end
 
 if options[:master]
   master = Thread.new() {
@@ -153,8 +155,6 @@ if options[:master]
     end
     
     if options[:config]
-      puts "Configuration du serveur maître…"
-      system("ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} ruby #{INSTALL_FOLDER}/master.rb")
 
       puts "Réécriture des fichiers de configuration PostgreSQL…"
       FileUtils.cp(INSTALL_FOLDER+'/master/postgresql.conf.template',INSTALL_FOLDER+'/master/postgresql.conf')
@@ -173,8 +173,11 @@ if options[:master]
         replace = replace.gsub(/PSQL_FOLDER/, PSQL_FOLDER)
         replace = replace.gsub(/SYNC_MASTER/, SYNC_MASTER)
         File.open(file_name, "w") { |file| file.puts replace }
-        `scp -P #{PORT_SSH_MASTER} #{file_name} #{HOST_MASTER}:#{PSQL_FOLDER}/data/#{File.basename(file_name)}`
+        `scp -P #{PORT_SSH_MASTER} #{file_name} #{HOST_MASTER}:#{PSQL_FOLDER}/conf/#{File.basename(file_name)}`
       end
+
+      puts "Configuration du serveur maître…"
+      system("ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} ruby #{INSTALL_FOLDER}/master.rb")
 
       puts "Récupération de la base de données du serveur maître…"
     end
@@ -220,9 +223,7 @@ if options[:slave]
     end
 
     if options[:config]
-
-      master.join
-
+      
       puts "Configuration du serveur esclave…"
       system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/slave.rb")
 

@@ -18,3 +18,4 @@ FileUtils.rm_r("./data") if FileTest.directory?('./data/')
 # Décompression
 
 FileUtils.mkdir_p(PSQL_FOLDER+'/'+HOST_MASTER) if not FileTest.directory?(PSQL_FOLDER+'/'+HOST_MASTER)
+FileUtils.chown_R 'postgres','postgres', PSQL_FOLDER+'/'+HOST_MASTER
