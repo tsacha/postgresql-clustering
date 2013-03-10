@@ -116,10 +116,15 @@ puts "Exécution du script d'installation de PosgreSQL"
 puts "------"
 puts
 
+<<<<<<< HEAD
 if (options[:reset]) || (not File.exists?(INSTALL_FOLDER+'/ssh/id_rsa'))
   puts "Génération de la clé SSH commune…"
   system("ssh-keygen -f #{INSTALL_FOLDER}/ssh/id_rsa -N ''")
 end
+=======
+puts "Génération de la clé SSH commune…"
+system("ssh-keygen -f #{INSTALL_FOLDER}/ssh/id_rsa -N ''")
+>>>>>>> origin/master
 
 if options[:master]
   master = Thread.new() {
@@ -155,7 +160,6 @@ if options[:master]
     end
     
     if options[:config]
-
       puts "Réécriture des fichiers de configuration PostgreSQL…"
       FileUtils.cp(INSTALL_FOLDER+'/master/postgresql.conf.template',INSTALL_FOLDER+'/master/postgresql.conf')
       FileUtils.cp(INSTALL_FOLDER+'/master/pg_hba.conf.template',INSTALL_FOLDER+'/master/pg_hba.conf')

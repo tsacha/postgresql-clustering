@@ -25,5 +25,6 @@ sleep 1
 
 system("#{PSQL_FOLDER}/bin/pg_basebackup -U postgres -D - -P -Ft | bzip2 | ssh postgres@#{HOST_SLAVE} -i #{PSQL_FOLDER}/.ssh/id_rsa 'cat - > /tmp/pg_basebackup.tar.bz2'")
 
+
 # TODO
 # tar >> host
