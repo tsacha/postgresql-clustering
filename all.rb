@@ -116,15 +116,10 @@ puts "Exécution du script d'installation de PosgreSQL"
 puts "------"
 puts
 
-<<<<<<< HEAD
 if (options[:reset]) || (not File.exists?(INSTALL_FOLDER+'/ssh/id_rsa'))
   puts "Génération de la clé SSH commune…"
   system("ssh-keygen -f #{INSTALL_FOLDER}/ssh/id_rsa -N ''")
 end
-=======
-puts "Génération de la clé SSH commune…"
-system("ssh-keygen -f #{INSTALL_FOLDER}/ssh/id_rsa -N ''")
->>>>>>> origin/master
 
 if options[:master]
   master = Thread.new() {
