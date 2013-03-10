@@ -41,4 +41,5 @@ system("make install")
 puts "Gestion des permissions…"
 `groupadd #{PSQL_GROUP}`
 `useradd -d #{PSQL_FOLDER} -g #{PSQL_GROUP} #{PSQL_USER}`
+
 FileUtils.chown_R PSQL_USER,PSQL_GROUP,PSQL_FOLDER

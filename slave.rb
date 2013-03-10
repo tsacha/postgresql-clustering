@@ -11,5 +11,10 @@ STDOUT.sync = true
 Dir.chdir(PSQL_FOLDER)
 
 FileUtils.rm_r("./data") if FileTest.directory?('./data/')
-system("su - #{PSQL_USER} -c '#{PSQL_FOLDER}/bin/initdb #{PSQL_FOLDER}/data/'")
+`killall -9 postgres`
+
+
 FileUtils.mkdir_p(PSQL_FOLDER+'/'+HOST_MASTER) if not FileTest.directory?(PSQL_FOLDER+'/'+HOST_MASTER)
+
+FileUtils.rm_r("./.ssh") if FileTest.directory?('./.ssh/')
+`su - #{PSQL_USER} -c 'ssh-keygen -f ~/.ssh/id_rsa -N ""'`

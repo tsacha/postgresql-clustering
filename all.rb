@@ -5,7 +5,7 @@ load 'const.rb'
 require 'optparse'
 require 'fileutils'
 
-options = {:verbose => false, :install => true, :remote => true, :master => true, :slave => true, :pgpool => true, :reset => false}
+options = {:verbose => false, :install => true, :remote => true, :master => true, :slave => true, :pgpool => true, :config => true, :launch => true, :reset => false}
 OptionParser.new do |opts|
   opts.banner = "Usage: all.rb [options]"
 
@@ -19,6 +19,14 @@ OptionParser.new do |opts|
 
   opts.on("-r", "--[no-]remote", "Send remote scripts and install Ruby on remote servers") do |r|
     options[:remote] = r
+  end
+
+  opts.on("-c", "--[no-]config", "Configure servers") do |c|
+    options[:config] = c
+  end
+
+  opts.on("-l", "--[no-]launch", "Launch servers") do |l|
+    options[:launch] = l
   end
 
   opts.on("-m", "--[no-]master", "Prepare master server") do |m|
@@ -124,6 +132,9 @@ if options[:master]
       
       puts "Envoi du script de configuration du serveur maître…"
       `scp -P #{PORT_SSH_MASTER} master.rb #{HOST_MASTER}:#{INSTALL_FOLDER}`
+
+      puts "Envoi du script de lancement du serveur maître…"
+      `scp -P #{PORT_SSH_MASTER} master_launch.rb #{HOST_MASTER}:#{INSTALL_FOLDER}`
     
       puts "Installation de Ruby…"
       `ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} yum -y install ruby`
@@ -133,27 +144,40 @@ if options[:master]
       puts "Installation de PostgreSQL…"
       system("ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} ruby #{INSTALL_FOLDER}/init_psql.rb")
     end
-
-    puts "Configuration du serveur maître…"
-    system("ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} ruby #{INSTALL_FOLDER}/master.rb")
-
-    puts "Réécriture des fichiers de configuration PostgreSQL…"
-    FileUtils.cp(INSTALL_FOLDER+'/master/postgresql.conf.template',INSTALL_FOLDER+'/master/postgresql.conf')
-    FileUtils.cp(INSTALL_FOLDER+'/master/pg_hba.conf.template',INSTALL_FOLDER+'/master/pg_hba.conf')
-
-    file_names = [INSTALL_FOLDER+'/master/postgresql.conf', INSTALL_FOLDER+'/master/pg_hba.conf']
     
-    file_names.each do |file_name|
-      replace = File.read(file_name)
-      replace = replace.gsub(/HOST_MASTER/, HOST_MASTER)
-      replace = replace.gsub(/PORT_PSQL_MASTER/, PORT_PSQL_MASTER)
-      replace = replace.gsub(/PORT_SSH_SLAVE/, PORT_SSH_SLAVE)
-      replace = replace.gsub(/PSQL_USER/, PSQL_USER)
-      replace = replace.gsub(/HOST_SLAVE_IP/, HOST_SLAVE_IP)
-      replace = replace.gsub(/HOST_SLAVE/, HOST_SLAVE)
-      replace = replace.gsub(/PSQL_FOLDER/, PSQL_FOLDER)
-      replace = replace.gsub(/SYNC_MASTER/, SYNC_MASTER)
-      File.open(file_name, "w") { |file| file.puts replace }
+    if options[:config]
+      puts "Configuration du serveur maître…"
+      system("ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} ruby #{INSTALL_FOLDER}/master.rb")
+
+      puts "Récupération de la clé SSH du serveur maître…"
+      `scp -P #{PORT_SSH_MASTER} #{HOST_MASTER}:#{PSQL_FOLDER}/.ssh/id_rsa.pub #{INSTALL_FOLDER}/master/`
+      FileUtils.move INSTALL_FOLDER+'/master/id_rsa.pub', INSTALL_FOLDER+'/master/authorized_keys'
+
+      puts "Réécriture des fichiers de configuration PostgreSQL…"
+      FileUtils.cp(INSTALL_FOLDER+'/master/postgresql.conf.template',INSTALL_FOLDER+'/master/postgresql.conf')
+      FileUtils.cp(INSTALL_FOLDER+'/master/pg_hba.conf.template',INSTALL_FOLDER+'/master/pg_hba.conf')
+
+      file_names = [INSTALL_FOLDER+'/master/postgresql.conf', INSTALL_FOLDER+'/master/pg_hba.conf']
+      
+      file_names.each do |file_name|
+        replace = File.read(file_name)
+        replace = replace.gsub(/HOST_MASTER/, HOST_MASTER)
+        replace = replace.gsub(/PORT_PSQL_MASTER/, PORT_PSQL_MASTER)
+        replace = replace.gsub(/PORT_SSH_SLAVE/, PORT_SSH_SLAVE)
+        replace = replace.gsub(/PSQL_USER/, PSQL_USER)
+        replace = replace.gsub(/HOST_SLAVE_IP/, HOST_SLAVE_IP)
+        replace = replace.gsub(/HOST_SLAVE/, HOST_SLAVE)
+        replace = replace.gsub(/PSQL_FOLDER/, PSQL_FOLDER)
+        replace = replace.gsub(/SYNC_MASTER/, SYNC_MASTER)
+        File.open(file_name, "w") { |file| file.puts replace }
+
+        `scp -P #{PORT_SSH_MASTER} #{file_name} #{HOST_MASTER}:#{PSQL_FOLDER}/data/#{File.basename(file_name)}`
+      end
+    end
+    
+    if options[:launch]
+      puts "Lancement de PostgreSQL…"
+      system("ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} ruby #{INSTALL_FOLDER}/master_launch.rb")
     end
   }
 end
@@ -175,6 +199,9 @@ if options[:slave]
       puts "Envoi du script de configuration du serveur secondaire…"
       `scp -P #{PORT_SSH_SLAVE} slave.rb #{HOST_SLAVE}:#{INSTALL_FOLDER}`
 
+      puts "Envoi du script de lancement du serveur esclave…"
+      `scp -P #{PORT_SSH_SLAVE} slave_launch.rb #{HOST_SLAVE}:#{INSTALL_FOLDER}`
+
       puts "Installation de Ruby…"
       `ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} yum -y install ruby`
     end
@@ -184,29 +211,41 @@ if options[:slave]
       system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/init_psql.rb")
     end
 
-    puts "Configuration du serveur esclave…"
-    system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/slave.rb")
+    if options[:config]
+      puts "Configuration du serveur esclave…"
+      system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/slave.rb")
+      
+      puts "Réécriture des fichiers de configuration PostgreSQL…"
+      FileUtils.cp(INSTALL_FOLDER+'/slave/postgresql.conf.template',INSTALL_FOLDER+'/slave/postgresql.conf')
+      FileUtils.cp(INSTALL_FOLDER+'/slave/pg_hba.conf.template',INSTALL_FOLDER+'/slave/pg_hba.conf')
+      FileUtils.cp(INSTALL_FOLDER+'/slave/recovery.conf.template',INSTALL_FOLDER+'/slave/recovery.conf')
+      
+      file_names = [INSTALL_FOLDER+'/slave/postgresql.conf', INSTALL_FOLDER+'/slave/pg_hba.conf', INSTALL_FOLDER+'/slave/recovery.conf']
+      
+      file_names.each do |file_name|
+        replace = File.read(file_name)
+        replace = replace.gsub(/HOST_MASTER_IP/, HOST_MASTER_IP)
+        replace = replace.gsub(/HOST_MASTER/, HOST_MASTER)
+        replace = replace.gsub(/PORT_PSQL_MASTER/, PORT_PSQL_MASTER)
+        replace = replace.gsub(/PORT_PSQL_SLAVE/, PORT_PSQL_SLAVE)
+        replace = replace.gsub(/PORT_SSH_SLAVE/, PORT_SSH_SLAVE)
+        replace = replace.gsub(/PSQL_USER/, PSQL_USER)
+        replace = replace.gsub(/PSQL_FOLDER/, PSQL_FOLDER)
+        replace = replace.gsub(/HOT_STANDBY_SLAVE/, HOT_STANDBY_SLAVE)
+        File.open(file_name, "w") { |file| file.puts replace }
+        
+        `scp -P #{PORT_SSH_SLAVE} #{file_name} #{HOST_SLAVE}:#{PSQL_FOLDER}/data/#{File.basename(file_name)}`
+      end
 
-    puts "Réécriture des fichiers de configuration PostgreSQL…"
-    FileUtils.cp(INSTALL_FOLDER+'/slave/postgresql.conf.template',INSTALL_FOLDER+'/slave/postgresql.conf')
-    FileUtils.cp(INSTALL_FOLDER+'/slave/pg_hba.conf.template',INSTALL_FOLDER+'/slave/pg_hba.conf')
-    FileUtils.cp(INSTALL_FOLDER+'/slave/recovery.conf.template',INSTALL_FOLDER+'/slave/recovery.conf')
-
-    file_names = [INSTALL_FOLDER+'/slave/postgresql.conf', INSTALL_FOLDER+'/slave/pg_hba.conf', INSTALL_FOLDER+'/slave/recovery.conf']
-    
-    file_names.each do |file_name|
-      replace = File.read(file_name)
-      replace = replace.gsub(/HOST_MASTER_IP/, HOST_MASTER_IP)
-      replace = replace.gsub(/HOST_MASTER/, HOST_MASTER)
-      replace = replace.gsub(/PORT_PSQL_MASTER/, PORT_PSQL_MASTER)
-      replace = replace.gsub(/PORT_PSQL_SLAVE/, PORT_PSQL_SLAVE)
-      replace = replace.gsub(/PORT_SSH_SLAVE/, PORT_SSH_SLAVE)
-      replace = replace.gsub(/PSQL_USER/, PSQL_USER)
-      replace = replace.gsub(/PSQL_FOLDER/, PSQL_FOLDER)
-      replace = replace.gsub(/HOT_STANDBY_SLAVE/, HOT_STANDBY_SLAVE)
-      File.open(file_name, "w") { |file| file.puts replace }
+      master.join
+      puts "Importation de la clé SSH du serveur maître…"
+      `scp -P #{PORT_SSH_SLAVE} master/authorized_keys #{HOST_SLAVE}:#{PSQL_FOLDER}/.ssh/`
     end
-
+    
+    if options[:launch]
+      puts "Lancement de PostgreSQL…"
+      system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/slave_launch.rb")
+    end
   }
 end
 
