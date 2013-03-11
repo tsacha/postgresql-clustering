@@ -15,10 +15,13 @@ puts "Création du répertoire initial de PostgreSQL…"
 
 FileUtils.mkdir_p(PSQL_FOLDER+"/conf") if not FileTest.directory?(PSQL_FOLDER)
 FileUtils.mkdir_p(PSQL_FOLDER+"/src") if not FileTest.directory?(PSQL_FOLDER)
+if `hostname` == HOST_SLAVE
+  FileUtils.mkdir_p(PSQL_FOLDER+'/'+HOST_MASTER) if not FileTest.directory?(PSQL_FOLDER+'/'+HOST_MASTER)
+end
 
 puts "Gestion des permissions…"
-`groupadd #{PSQL_GROUP}`
-`useradd -d #{PSQL_FOLDER} -g #{PSQL_GROUP} #{PSQL_USER}`
+`groupadd #{PSQL_GROUP} 2> /dev/null`
+`useradd -d #{PSQL_FOLDER} -g #{PSQL_GROUP} #{PSQL_USER} 2> /dev/null`
 FileUtils.mkdir_p(PSQL_FOLDER+"/.ssh") if not FileTest.directory?(PSQL_FOLDER+"/.ssh")
 FileUtils.chown_R PSQL_USER,PSQL_GROUP,PSQL_FOLDER
 

@@ -176,6 +176,7 @@ if options[:master]
       end
 
       puts "Configuration du serveur maître…"
+      
       system("ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} ruby #{INSTALL_FOLDER}/master.rb")
 
       puts "Récupération de la base de données du serveur maître…"
@@ -215,44 +216,12 @@ if options[:slave]
     if options[:install]
       puts "Installation de PostgreSQL…"
       system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/init_psql.rb")
+
       puts "Envoi de la clé SSH commune au serveur esclave"
       `scp -P #{PORT_SSH_SLAVE} #{INSTALL_FOLDER}/ssh/id_rsa #{HOST_SLAVE}:#{PSQL_FOLDER}/.ssh/` 
       `scp -P #{PORT_SSH_SLAVE} #{INSTALL_FOLDER}/ssh/id_rsa.pub #{HOST_SLAVE}:#{PSQL_FOLDER}/.ssh/` 
       `ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} 'cp #{PSQL_FOLDER}/.ssh/id_rsa.pub #{PSQL_FOLDER}/.ssh/authorized_keys; chown -R postgres:postgres #{PSQL_FOLDER}/.ssh'`
-    end
-
-    if options[:config]
-      
-      puts "Configuration du serveur esclave…"
-      system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/slave.rb")
-
-      puts "Réécriture des fichiers de configuration PostgreSQL…"
-      FileUtils.cp(INSTALL_FOLDER+'/slave/postgresql.conf.template',INSTALL_FOLDER+'/slave/postgresql.conf')
-      FileUtils.cp(INSTALL_FOLDER+'/slave/pg_hba.conf.template',INSTALL_FOLDER+'/slave/pg_hba.conf')
-      FileUtils.cp(INSTALL_FOLDER+'/slave/recovery.conf.template',INSTALL_FOLDER+'/slave/recovery.conf')
-      
-      file_names = [INSTALL_FOLDER+'/slave/postgresql.conf', INSTALL_FOLDER+'/slave/pg_hba.conf', INSTALL_FOLDER+'/slave/recovery.conf']
-      
-      file_names.each do |file_name|
-        replace = File.read(file_name)
-        replace = replace.gsub(/HOST_MASTER_IP/, HOST_MASTER_IP)
-        replace = replace.gsub(/HOST_MASTER/, HOST_MASTER)
-        replace = replace.gsub(/PORT_PSQL_MASTER/, PORT_PSQL_MASTER)
-        replace = replace.gsub(/PORT_PSQL_SLAVE/, PORT_PSQL_SLAVE)
-        replace = replace.gsub(/PORT_SSH_SLAVE/, PORT_SSH_SLAVE)
-        replace = replace.gsub(/PSQL_USER/, PSQL_USER)
-        replace = replace.gsub(/PSQL_FOLDER/, PSQL_FOLDER)
-        replace = replace.gsub(/HOT_STANDBY_SLAVE/, HOT_STANDBY_SLAVE)
-        File.open(file_name, "w") { |file| file.puts replace }
-        
-        `scp -P #{PORT_SSH_SLAVE} #{file_name} #{HOST_SLAVE}:#{PSQL_FOLDER}/data/#{File.basename(file_name)}`
-      end
-    end
-    
-    if options[:launch]
-      puts "Lancement de PostgreSQL…"
-#      system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/slave_launch.rb")
-    end
+    end    
   }
 end
 
@@ -290,6 +259,34 @@ end
 
 if options[:slave]
   slave.join
+end
+
+if options[:slave]
+  if options[:config]     
+    puts "Réécriture des fichiers de configuration PostgreSQL…"
+    FileUtils.cp(INSTALL_FOLDER+'/slave/postgresql.conf.template',INSTALL_FOLDER+'/slave/postgresql.conf')
+    FileUtils.cp(INSTALL_FOLDER+'/slave/pg_hba.conf.template',INSTALL_FOLDER+'/slave/pg_hba.conf')
+    FileUtils.cp(INSTALL_FOLDER+'/slave/recovery.conf.template',INSTALL_FOLDER+'/slave/recovery.conf')
+    file_names = [INSTALL_FOLDER+'/slave/postgresql.conf', INSTALL_FOLDER+'/slave/pg_hba.conf', INSTALL_FOLDER+'/slave/recovery.conf']
+      
+    file_names.each do |file_name|
+      replace = File.read(file_name)
+      replace = replace.gsub(/HOST_MASTER_IP/, HOST_MASTER_IP)
+      replace = replace.gsub(/HOST_MASTER/, HOST_MASTER)
+      replace = replace.gsub(/PORT_PSQL_MASTER/, PORT_PSQL_MASTER)
+      replace = replace.gsub(/PORT_PSQL_SLAVE/, PORT_PSQL_SLAVE)
+      replace = replace.gsub(/PORT_SSH_SLAVE/, PORT_SSH_SLAVE)
+      replace = replace.gsub(/PSQL_USER/, PSQL_USER)
+      replace = replace.gsub(/PSQL_FOLDER/, PSQL_FOLDER)
+      replace = replace.gsub(/HOT_STANDBY_SLAVE/, HOT_STANDBY_SLAVE)
+      File.open(file_name, "w") { |file| file.puts replace }
+      
+      `scp -P #{PORT_SSH_SLAVE} #{file_name} #{HOST_SLAVE}:#{PSQL_FOLDER}/conf/#{File.basename(file_name)}`
+    end
+
+    puts "Configuration du serveur esclave…"
+    system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/slave.rb")
+  end
 end
 
 if options[:pgpool]

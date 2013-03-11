@@ -10,12 +10,13 @@ STDOUT.sync = true
 
 Dir.chdir(PSQL_FOLDER)
 
-FileUtils.rm_r("./data") if FileTest.directory?('./data/')
 `killall -9 postgres`
+FileUtils.rm_r("./data") if FileTest.directory?('./data/')
+FileUtils.mkdir("./data")
 
-# TODO
-# Récupération de l'archive
-# Décompression
+Dir.chdir("./data")
+`tar xvjf /tmp/pg_basebackup.tar.bz2`
 
-FileUtils.mkdir_p(PSQL_FOLDER+'/'+HOST_MASTER) if not FileTest.directory?(PSQL_FOLDER+'/'+HOST_MASTER)
-FileUtils.chown_R 'postgres','postgres', PSQL_FOLDER+'/'+HOST_MASTER
+FileUtils.chown_R PSQL_USER,PSQL_GROUP, PSQL_FOLDER
+system("su - #{PSQL_USER} -c 'cp -R #{PSQL_FOLDER}/conf/* #{PSQL_FOLDER}/data/'")
+
