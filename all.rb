@@ -175,6 +175,10 @@ if options[:master]
         `scp -P #{PORT_SSH_MASTER} #{file_name} #{HOST_MASTER}:#{PSQL_FOLDER}/conf/#{File.basename(file_name)}`
       end
 
+      if options[:slave]
+        slave.join
+      end
+
       puts "Configuration du serveur maître…"
       
       system("ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} ruby #{INSTALL_FOLDER}/master.rb")
@@ -216,12 +220,11 @@ if options[:slave]
     if options[:install]
       puts "Installation de PostgreSQL…"
       system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/init_psql.rb")
-
       puts "Envoi de la clé SSH commune au serveur esclave"
       `scp -P #{PORT_SSH_SLAVE} #{INSTALL_FOLDER}/ssh/id_rsa #{HOST_SLAVE}:#{PSQL_FOLDER}/.ssh/` 
       `scp -P #{PORT_SSH_SLAVE} #{INSTALL_FOLDER}/ssh/id_rsa.pub #{HOST_SLAVE}:#{PSQL_FOLDER}/.ssh/` 
       `ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} 'cp #{PSQL_FOLDER}/.ssh/id_rsa.pub #{PSQL_FOLDER}/.ssh/authorized_keys; chown -R postgres:postgres #{PSQL_FOLDER}/.ssh'`
-    end    
+    end
   }
 end
 
@@ -255,10 +258,6 @@ end
 
 if options[:master]
   master.join
-end
-
-if options[:slave]
-  slave.join
 end
 
 if options[:slave]

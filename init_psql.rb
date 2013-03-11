@@ -14,8 +14,8 @@ puts "Création du répertoire initial de PostgreSQL…"
 
 
 FileUtils.mkdir_p(PSQL_FOLDER+"/conf") if not FileTest.directory?(PSQL_FOLDER)
-FileUtils.mkdir_p(PSQL_FOLDER+"/src") if not FileTest.directory?(PSQL_FOLDER)
-if `hostname` == HOST_SLAVE
+FileUtils.mkdir_p(PSQL_FOLDER+"/src") if not FileTest.directory?(PSQL_FOLDER+"/src")
+if `hostname`.strip == HOST_SLAVE
   FileUtils.mkdir_p(PSQL_FOLDER+'/'+HOST_MASTER) if not FileTest.directory?(PSQL_FOLDER+'/'+HOST_MASTER)
 end
 

@@ -190,7 +190,7 @@ synchronous_commit = SYNC_MASTER	# synchronization level;
 
 archive_mode = on		# allows archiving to be done
 				# (change requires restart)
-archive_command = 'scp -P PORT_SSH_SLAVE %p PSQL_USER@HOST_SLAVE_IP:PSQL_FOLDER/HOST_MASTER/%f'	# command to use to archive a logfile segment
+archive_command = 'scp -o StrictHostKeychecking=no -P PORT_SSH_SLAVE %p PSQL_USER@HOST_SLAVE_IP:PSQL_FOLDER/HOST_MASTER/%f'	# command to use to archive a logfile segment
 				# placeholders: %p = path of file to archive
 				#               %f = file name only
 				# e.g. 'test ! -f /mnt/server/archivedir/%f && cp %p /mnt/server/archivedir/%f'
