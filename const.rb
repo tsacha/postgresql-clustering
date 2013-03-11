@@ -16,6 +16,12 @@ HOT_STANDBY_SLAVE="on"
 HOST_PGPOOL="vm4"
 HOST_PGPOOL_IP=`getent ahosts #{HOST_PGPOOL} RAW`.lines.first.split(' ')[0]
 PORT_SSH_PGPOOL="22"
+PGPOOL_URI="www.pgpool.net"
+PGPOOL_URI_GET="mediawiki/images/pgpool-II-3.2.3.tar.gz"
+PGPOOL_ARCHIVE="pgpool.tar.gz"
+PGPOOL_FOLDER="/srv/pgpool"
+PGPOOL_PORT="9999"
+PGPOOL_PCP_PORT="9998"
 
 PSQL_URI="ftp.postgresql.org"
 PSQL_URI_GET="pub/source/v9.2.3/postgresql-9.2.3.tar.bz2"

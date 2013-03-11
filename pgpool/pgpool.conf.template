@@ -28,7 +28,7 @@ listen_addresses = '*'
                                    # Host name or IP address to listen on:
                                    # '*' for all, '' for no TCP/IP connections
                                    # (change requires restart)
-port = 9999
+port = PGPOOL_PORT
                                    # Port number
                                    # (change requires restart)
 socket_dir = '/tmp'
@@ -40,7 +40,7 @@ socket_dir = '/tmp'
 
 # - pgpool Communication Manager Connection Settings -
 
-pcp_port = 9898
+pcp_port = PGPOOL_PCP_PORT 
                                    # Port number for pcp
                                    # (change requires restart)
 pcp_socket_dir = '/tmp'
@@ -51,21 +51,21 @@ pcp_socket_dir = '/tmp'
 
 # - Backend Connection Settings -
 
-backend_hostname0 = '192.168.122.133'
+backend_hostname0 = 'HOST_MASTER_IP'
                                    # Host name or IP address to connect to for backend 0
-backend_port0 = 5432
+backend_port0 = PORT_PSQL_MASTER
                                    # Port number for backend 0
 backend_weight0 = 1
                                    # Weight for backend 0 (only in load balancing mode)
-backend_data_directory0 = '/var/lib/pgsql/9.2/data'
+backend_data_directory0 = 'PSQL_FOLDER/data'
                                    # Data directory for backend 0
 backend_flag0 = 'ALLOW_TO_FAILOVER'
                                    # Controls various backend behavior
                                    # ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
-backend_hostname1 = '192.168.122.226'
-backend_port1 = 5433
+backend_hostname1 = 'HOST_SLAVE_IP'
+backend_port1 = PORT_PSQL_SLAVE
 backend_weight1 = 1
-backend_data_directory1 = '/var/lib/pgsql/9.2/data'
+backend_data_directory1 = 'PSQL_FOLDER/data'
 backend_flag1 = 'ALLOW_TO_FAILOVER'
 
 # - Authentication -
@@ -180,7 +180,7 @@ debug_level = 0
 # FILE LOCATIONS
 #------------------------------------------------------------------------------
 
-pid_file_name = '/var/run/pgpool/pgpool.pid'
+pid_file_name = 'PGPOOL_FOLDER/etc/pgpool.pid'
                                    # PID file name
                                    # (change requires restart)
 logdir = '/tmp'

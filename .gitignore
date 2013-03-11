@@ -1,9 +1,5 @@
 *~
 #*#
-master/postgresql.conf
-master/pg_hba.conf
-slave/postgresql.conf
-slave/pg_hba.conf
-slave/recovery.conf
+*/*.conf
 master/authorized_keys
 ssh/
