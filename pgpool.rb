@@ -12,6 +12,7 @@ FileUtils.rm PGPOOL_FOLDER+'/etc/pgpool.pid' if File.exists?(PGPOOL_FOLDER+'./et
 
 # Configuration de la machine maître
 system("su - #{PSQL_USER} -c 'cp -R #{PGPOOL_FOLDER}/conf/* #{PGPOOL_FOLDER}/etc/'")
+FileUtils.chmod 0777, PGPOOL_FOLDER+'/etc/failover.rb'
 system("#{PGPOOL_FOLDER}/bin/pgpool -d")
 
 

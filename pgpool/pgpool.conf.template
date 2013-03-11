@@ -361,7 +361,7 @@ health_check_retry_delay = 1
 # FAILOVER AND FAILBACK
 #------------------------------------------------------------------------------
 
-failover_command = ''
+failover_command = 'PGPOOL_FOLDER/etc/failover.rb %d %H PSQL_FOLDER/data/trigger'
                                    # Executes this command at failover
                                    # Special values:
                                    #   %d = node id

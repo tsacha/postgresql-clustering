@@ -3,3 +3,4 @@
 */*.conf
 master/authorized_keys
 ssh/
+pgpool/*.rb

@@ -304,8 +304,9 @@ if options[:pgpool]
       FileUtils.cp(INSTALL_FOLDER+'/pgpool/pgpool.conf.template',INSTALL_FOLDER+'/pgpool/pgpool.conf')
       FileUtils.cp(INSTALL_FOLDER+'/pgpool/pg_hba.conf.template',INSTALL_FOLDER+'/pgpool/pg_hba.conf')
       FileUtils.cp(INSTALL_FOLDER+'/pgpool/pcp.conf.template',INSTALL_FOLDER+'/pgpool/pcp.conf')
+      FileUtils.cp(INSTALL_FOLDER+'/pgpool/failover.rb.template',INSTALL_FOLDER+'/pgpool/failover.rb')
       
-      file_names = [INSTALL_FOLDER+'/pgpool/pgpool.conf', INSTALL_FOLDER+'/pgpool/pg_hba.conf', INSTALL_FOLDER+'/pgpool/pcp.conf']
+      file_names = [INSTALL_FOLDER+'/pgpool/pgpool.conf', INSTALL_FOLDER+'/pgpool/pg_hba.conf', INSTALL_FOLDER+'/pgpool/pcp.conf', INSTALL_FOLDER+'/pgpool/failover.rb']
       
       file_names.each do |file_name|
         replace = File.read(file_name)

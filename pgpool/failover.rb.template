@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
+
+failed_node=ARGV[0]
+new_master=ARGV[1]
+trigger_file=ARGV[2]
+
+exit 0 if failed_node == 1
+
+`su - postgres -c 'ssh -o StrictHostKeychecking=no -T #{new_master} /bin/touch #{trigger_file}'`
+exit 0 
