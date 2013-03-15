@@ -135,7 +135,7 @@ client_idle_limit = 0
 
 # - Where to log -
 
-log_destination = 'stderr'
+#log_destination = 'stderr'
                                    # Where to log
                                    # Valid values are combinations of stderr,
                                    # and syslog. Default to stderr.
@@ -146,14 +146,24 @@ print_timestamp = on
                                    # Print timestamp on each line
                                    # (change requires restart)
 
-log_connections = off
-                                   # Log connections
+log_connections = on
+log_disconnections = on
+     
+                              # Log connections
 log_hostname = off
                                    # Hostname will be shown in ps status
                                    # and in logs if connections are logged
 log_statement = off
                                    # Log all statements
 log_per_node_statement = off
+log_min_duration_statement = 0	# -1 is disabled, 0 logs all statements
+log_checkpoints = on
+log_line_prefix = '%t [%p]: [%l-1] user=%u,db=%d '			# special values:
+log_lock_waits = on			# log lock waits >= deadlock_timeout
+log_temp_files = 0			# log temporary files equal or larger
+
+
+
                                    # Log all statements
                                    # with node and backend informations
 log_standby_delay = 'none'
@@ -183,7 +193,7 @@ debug_level = 0
 pid_file_name = 'PGPOOL_FOLDER/etc/pgpool.pid'
                                    # PID file name
                                    # (change requires restart)
-logdir = '/tmp'
+logdir = '/srv'
                                    # Directory of pgPool status file
                                    # (change requires restart)
 

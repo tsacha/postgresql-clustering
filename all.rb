@@ -234,6 +234,7 @@ if options[:master]
         replace = replace.gsub(/PORT_SSH_SLAVE/, PORT_SSH_SLAVE)
         replace = replace.gsub(/PSQL_USER/, PSQL_USER)
         replace = replace.gsub(/HOST_SLAVE_IP/, HOST_SLAVE_IP)
+        replace = replace.gsub(/HOST_PGPOOL_IP/, HOST_PGPOOL_IP)
         replace = replace.gsub(/HOST_SLAVE/, HOST_SLAVE)
         replace = replace.gsub(/PSQL_FOLDER/, PSQL_FOLDER)
         replace = replace.gsub(/SYNC_MASTER/, SYNC_MASTER)
@@ -273,6 +274,7 @@ slaveConfig = Thread.new {
       file_names.each do |file_name|
         replace = File.read(file_name)
         replace = replace.gsub(/HOST_MASTER_IP/, HOST_MASTER_IP)
+        replace = replace.gsub(/HOST_PGPOOL_IP/, HOST_PGPOOL_IP)
         replace = replace.gsub(/HOST_MASTER/, HOST_MASTER)
         replace = replace.gsub(/PORT_PSQL_MASTER/, PORT_PSQL_MASTER)
         replace = replace.gsub(/PORT_PSQL_SLAVE/, PORT_PSQL_SLAVE)

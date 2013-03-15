@@ -21,6 +21,6 @@ system("su - #{PSQL_USER} -c '#{PSQL_FOLDER}/bin/pg_ctl -w -D #{PSQL_FOLDER}/dat
 
 
 `#{PSQL_FOLDER}/bin/psql -U postgres -p #{PORT_PSQL_MASTER} -c "SET LOCAL synchronous_commit TO OFF; CREATE USER replication REPLICATION LOGIN ENCRYPTED PASSWORD 'replication';"`
-system("#{PSQL_FOLDER}/bin/pg_basebackup -U postgres -D - -P -Ft | bzip2 | ssh #{PSQL_USER}@#{HOST_SLAVE} -i #{PSQL_FOLDER}/.ssh/id_rsa 'cat - > /tmp/pg_basebackup.tar.bz2'")
+system("#{PSQL_FOLDER}/bin/pg_basebackup -U postgres -D - -P -Ft | bzip2 | ssh -o StrictHostKeychecking=no #{PSQL_USER}@#{HOST_SLAVE} -i #{PSQL_FOLDER}/.ssh/id_rsa 'cat - > /tmp/pg_basebackup.tar.bz2'")
 
 `kill -9 $(ps -p $(ps -p $$ -o ppid=) -o ppid=)`
