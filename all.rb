@@ -5,7 +5,7 @@ load 'const.rb'
 require 'optparse'
 require 'fileutils'
 
-options = {:verbose => false, :install => true, :remote => true, :master => true, :slave => true, :pgpool => true, :config => true, :launch => true, :reset => false}
+options = {:verbose => false, :init => true, :install => true, :compile => true, :remote => true, :master => true, :slave => true, :pgpool => true, :config => true, :launch => true, :reset => false}
 OptionParser.new do |opts|
   opts.banner = "Usage: all.rb [options]"
 
@@ -15,6 +15,14 @@ OptionParser.new do |opts|
 
   opts.on("-i", "--[no-]install", "Install PostgreSQL") do |i|
     options[:install] = i
+  end
+
+  opts.on("-j", "--[no-]init", "Initialisation of PostgreSQL") do |j|
+    options[:init] = j
+  end
+
+  opts.on("-t", "--[no-]compile", "Compilation of PostgreSQL") do |t|
+    options[:compile] = t
   end
 
   opts.on("-r", "--[no-]remote", "Send remote scripts and install Ruby on remote servers") do |r|
@@ -142,8 +150,14 @@ if options[:pgpool]
     end
 
     if options[:install]
-      puts "Installation de PostgreSQL…"
-      system("ssh #{HOST_PGPOOL} -p #{PORT_SSH_PGPOOL} ruby #{INSTALL_FOLDER}/init_psql.rb")
+      if options[:init]
+        puts "Installation de PostgreSQL…"
+        if options[:compile]
+          system("ssh #{HOST_PGPOOL} -p #{PORT_SSH_PGPOOL} ruby #{INSTALL_FOLDER}/init_psql.rb")
+        else
+          system("ssh #{HOST_PGPOOL} -p #{PORT_SSH_PGPOOL} ruby #{INSTALL_FOLDER}/init_psql.rb --no-compile")
+        end
+      end
       puts "Envoi de la clé SSH commune au serveur pgPool"
       `scp -P #{PORT_SSH_PGPOOL} #{INSTALL_FOLDER}/ssh/id_rsa #{HOST_PGPOOL}:#{PSQL_FOLDER}/.ssh/` 
       `scp -P #{PORT_SSH_PGPOOL} #{INSTALL_FOLDER}/ssh/id_rsa.pub #{HOST_PGPOOL}:#{PSQL_FOLDER}/.ssh/` 
@@ -176,8 +190,14 @@ if options[:slave]
     end
     
     if options[:install]
-      puts "Installation de PostgreSQL…"
-      system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/init_psql.rb")
+      if options[:init]
+        puts "Installation de PostgreSQL…"
+        if options[:compile]
+          system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/init_psql.rb")
+        else
+          system("ssh #{HOST_SLAVE} -p #{PORT_SSH_SLAVE} ruby #{INSTALL_FOLDER}/init_psql.rb --no-compile")
+        end
+      end
       puts "Envoi de la clé SSH commune au serveur esclave"
       `scp -P #{PORT_SSH_SLAVE} #{INSTALL_FOLDER}/ssh/id_rsa #{HOST_SLAVE}:#{PSQL_FOLDER}/.ssh/` 
       `scp -P #{PORT_SSH_SLAVE} #{INSTALL_FOLDER}/ssh/id_rsa.pub #{HOST_SLAVE}:#{PSQL_FOLDER}/.ssh/` 
@@ -211,8 +231,14 @@ if options[:master]
     end
     
     if options[:install]
-      puts "Installation de PostgreSQL…"
-      system("ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} ruby #{INSTALL_FOLDER}/init_psql.rb")
+      if options[:init]
+        puts "Installation de PostgreSQL…"
+        if options[:compile]
+          system("ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} ruby #{INSTALL_FOLDER}/init_psql.rb")
+        else
+          system("ssh #{HOST_MASTER} -p #{PORT_SSH_MASTER} ruby #{INSTALL_FOLDER}/init_psql.rb --no-compile")
+        end
+      end
 
       puts "Envoi de la clé SSH commune au serveur maître"
       `scp -P #{PORT_SSH_MASTER} #{INSTALL_FOLDER}/ssh/id_rsa #{HOST_MASTER}:#{PSQL_FOLDER}/.ssh/` 
