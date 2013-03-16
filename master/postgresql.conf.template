@@ -291,7 +291,7 @@ synchronous_standby_names = '*'  # standby servers that provide sync rep
 
 # - Where to Log -
 
-log_destination = 'stderr'		# Valid values are combinations of
+#log_destination = 'syslog'		# Valid values are combinations of
 					# stderr, csvlog, syslog, and eventlog,
 					# depending on platform.  csvlog
 					# requires logging_collector to be on.
@@ -305,7 +305,7 @@ logging_collector = on			# Enable capturing of stderr and csvlog
 # These are only used if logging_collector is on:
 log_directory = 'pg_log'		# directory where log files are written,
 					# can be absolute or relative to PGDATA
-log_filename = 'postgresql-%u.log'	# log file name pattern,
+log_filename = 'postgresql-%a.log'	# log file name pattern,
 					# can include strftime() escapes
 #log_file_mode = 0600			# creation mode for log files,
 					# begin with 0 to use octal notation
@@ -332,7 +332,7 @@ log_rotation_size = 0			# Automatic rotation of logfiles will
 
 # - When to Log -
 
-client_min_messages = error		# values in order of decreasing detail:
+#client_min_messages = debug5		# values in order of decreasing detail:
 					#   debug5
 					#   debug4
 					#   debug3
@@ -343,7 +343,7 @@ client_min_messages = error		# values in order of decreasing detail:
 					#   warning
 					#   error
 
-log_min_messages = error		# values in order of decreasing detail:
+#log_min_messages = debug5		# values in order of decreasing detail:
 					#   debug5
 					#   debug4
 					#   debug3
@@ -357,7 +357,7 @@ log_min_messages = error		# values in order of decreasing detail:
 					#   fatal
 					#   panic
 
-log_min_error_statement = error		# values in order of decreasing detail:
+#log_min_error_statement = debug5		# values in order of decreasing detail:
 				 	#   debug5
 					#   debug4
 					#   debug3
@@ -371,7 +371,7 @@ log_min_error_statement = error		# values in order of decreasing detail:
 					#   fatal
 					#   panic (effectively off)
 
-#log_min_duration_statement = -1	# -1 is disabled, 0 logs all statements
+log_min_duration_statement = 0	# -1 is disabled, 0 logs all statements
 					# and their durations, > 0 logs only
 					# statements running at least this number
 					# of milliseconds
@@ -383,13 +383,13 @@ log_min_error_statement = error		# values in order of decreasing detail:
 #debug_print_rewritten = off
 #debug_print_plan = off
 #debug_pretty_print = on
-#log_checkpoints = off
-#log_connections = off
-#log_disconnections = off
+log_checkpoints = on
+log_connections = on
+log_disconnections = on
 #log_duration = off
 #log_error_verbosity = default		# terse, default, or verbose messages
 #log_hostname = off
-#log_line_prefix = ''			# special values:
+log_line_prefix = '%t [%p]: [%l-1] user=%u,db=%d '			# special values:
 					#   %a = application name
 					#   %u = user name
 					#   %d = database name
@@ -409,9 +409,9 @@ log_min_error_statement = error		# values in order of decreasing detail:
 					#        processes
 					#   %% = '%'
 					# e.g. '<%u%%%d> '
-#log_lock_waits = off			# log lock waits >= deadlock_timeout
+log_lock_waits = on			# log lock waits >= deadlock_timeout
 #log_statement = 'none'			# none, ddl, mod, all
-#log_temp_files = -1			# log temporary files equal or larger
+log_temp_files = 0			# log temporary files equal or larger
 					# than the specified size in kilobytes;
 					# -1 disables, 0 logs all temp files
 log_timezone = 'Europe/Paris'

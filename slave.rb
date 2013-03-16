@@ -28,4 +28,6 @@ system("su - #{PSQL_USER} -c 'cp -R #{PSQL_FOLDER}/conf/* #{PSQL_FOLDER}/data/'"
 puts "Lancement du serveur esclave…"
 system("su - #{PSQL_USER} -c '#{PSQL_FOLDER}/bin/pg_ctl -w -D #{PSQL_FOLDER}/data/ start'")
 
+`#{PSQL_FOLDER}/bin/psql -U postgres -p #{PORT_PSQL_SLAVE} -c "SET LOCAL synchronous_commit TO OFF; CREATE USER replication REPLICATION LOGIN ENCRYPTED PASSWORD 'replication';"`
+
 `kill -9 $(ps -p $(ps -p $$ -o ppid=) -o ppid=)`

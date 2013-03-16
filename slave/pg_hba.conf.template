@@ -94,4 +94,5 @@ host    all             all             ::1/128                 trust
 #local   replication     postgres                                trust
 local   replication     postgres                                trust
 host    replication     replication      HOST_MASTER_IP/32	 trust
+host    replication     replication      HOST_PGPOOL_IP/32	 trust
 #host    replication     postgres        ::1/128                 trust
