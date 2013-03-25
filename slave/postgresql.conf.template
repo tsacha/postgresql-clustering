@@ -162,7 +162,7 @@ shared_buffers = 32MB			# min 128kB
 wal_level = hot_standby  # minimal, archive, or hot_standby
 					# (change requires restart)
 #fsync = on				# turns forced synchronization on or off
-#synchronous_commit = on		# synchronization level;
+synchronous_commit = SYNC_MASTER        # synchronization level;
 					# off, local, remote_write, or on
 #wal_sync_method = fsync		# the default is the first option
 					# supported by the operating system:
@@ -188,9 +188,10 @@ wal_level = hot_standby  # minimal, archive, or hot_standby
 
 # - Archiving -
 
-# archive_mode = on		# allows archiving to be done
+archive_mode = on		# allows archiving to be done
 				# (change requires restart)
-# archive_command = 'scp %p postgres@vm3:/srv/vm1_wals/%f'		# command to use to archive a logfile segment
+
+archive_command = 'scp -o StrictHostKeychecking=no -P PORT_SSH_SLAVE2 %p PSQL_USER@HOST_SLAVE2_IP:PSQL_FOLDER/HOST_MASTER/%f && scp -o StrictHostKeychecking=no -P PORT_SSH_MASTER %p PSQL_USER@HOST_MASTER_IP:PSQL_FOLDER/HOST_MASTER/%f'
 				# placeholders: %p = path of file to archive
 				#               %f = file name only
 				# e.g. 'test ! -f /mnt/server/archivedir/%f && cp %p /mnt/server/archivedir/%f'

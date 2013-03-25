@@ -52,13 +52,9 @@ pcp_socket_dir = '/tmp'
 # - Backend Connection Settings -
 
 backend_hostname0 = 'HOST_MASTER_IP'
-                                   # Host name or IP address to connect to for backend 0
 backend_port0 = PORT_PSQL_MASTER
-                                   # Port number for backend 0
 backend_weight0 = 1
-                                   # Weight for backend 0 (only in load balancing mode)
 backend_data_directory0 = 'PSQL_FOLDER/data'
-                                   # Data directory for backend 0
 backend_flag0 = 'ALLOW_TO_FAILOVER'
                                    # Controls various backend behavior
                                    # ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
@@ -67,6 +63,12 @@ backend_port1 = PORT_PSQL_SLAVE
 backend_weight1 = 1
 backend_data_directory1 = 'PSQL_FOLDER/data'
 backend_flag1 = 'ALLOW_TO_FAILOVER'
+
+backend_hostname2 = 'HOST_SLAVE2_IP'
+backend_port2 = PORT_PSQL_SLAVE2
+backend_weight2 = 1
+backend_data_directory2 = 'PSQL_FOLDER/data'
+backend_flag2 = 'ALLOW_TO_FAILOVER'
 
 # - Authentication -
 

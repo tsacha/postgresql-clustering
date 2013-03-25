@@ -5,7 +5,7 @@ load 'const.rb'
 require 'optparse'
 require 'fileutils'
 
-options = {:verbose => false, :init => true, :install => true, :compile => true, :remote => true, :master => true, :slave => true, :pgpool => true, :config => true, :launch => true, :reset => false}
+options = {:verbose => false, :init => true, :install => true, :compile => true, :remote => true, :master => true, :slave => true, :slavebis => true, :pgpool => true, :config => true, :launch => true, :reset => false}
 OptionParser.new do |opts|
   opts.banner = "Usage: all.rb [options]"
 
@@ -45,11 +45,15 @@ OptionParser.new do |opts|
     options[:slave] = s
   end
 
+  opts.on("-b", "--[no-]slavebis", "Prepare second slave server") do |b|
+    options[:slavebis] = b
+  end
+
   opts.on("-p", "--[no-]pgpool", "Prepare pgpool server") do |p|
     options[:pgpool] = p
   end
 
-  opts.on("--reset", "Reset all remove servers") do |reset|
+  opts.on("--reset", "Reset all remote servers") do |reset|
     options[:reset] = reset
   end
 
@@ -88,6 +92,21 @@ if options[:reset]
     }
   end
 
+  if options[:slavebis]
+    slavebis = Thread.new() {
+      if options[:remote]
+        puts "Envoi du script de réinitialisation…"
+        `scp -P #{PORT_SSH_SLAVE2} reset.rb #{HOST_SLAVE2}:/tmp`
+
+        puts "Envoi des constantes…"
+        `scp -P #{PORT_SSH_SLAVE2} const.rb #{HOST_SLAVE2}:/tmp`
+      end
+
+      puts "Réinitialisation du serveur esclave…"
+      system("ssh #{HOST_SLAVE2} -p #{PORT_SSH_SLAVE2} ruby /tmp/reset.rb")
+    }
+  end
+
   if options[:pgpool]
     pgpool = Thread.new() {
       if options[:remote]
@@ -109,6 +128,10 @@ if options[:reset]
   
   if options[:slave]
     slave.join
+  end
+
+  if options[:slavebis]
+    slavebis.join
   end
   
   if options[:pgpool]
@@ -206,6 +229,46 @@ if options[:slave]
   }
 end
 
+if options[:slavebis]
+  slavebis = Thread.new() {
+    # Installation de la machine esclave
+    if options[:remote]
+      puts "Création du répertoire d'installation…"
+      `ssh #{HOST_SLAVE2} -p #{PORT_SSH_SLAVE2} mkdir -p #{INSTALL_FOLDER}`
+    
+      puts "Envoi du script d'installation de PostgreSQL…"
+      `scp -P #{PORT_SSH_SLAVE2} init_psql.rb #{HOST_SLAVE2}:#{INSTALL_FOLDER}`
+      
+      puts "Envoi des constantes d'installation…"
+      `scp -P #{PORT_SSH_SLAVE2} const.rb #{HOST_SLAVE2}:#{INSTALL_FOLDER}`
+
+      puts "Envoi du script de configuration du serveur secondaire…"
+      `scp -P #{PORT_SSH_SLAVE2} slave.rb #{HOST_SLAVE2}:#{INSTALL_FOLDER}`
+
+      puts "Envoi du script de lancement du serveur esclave…"
+      `scp -P #{PORT_SSH_SLAVE2} slave_launch.rb #{HOST_SLAVE2}:#{INSTALL_FOLDER}`
+
+      puts "Installation de Ruby…"
+      `ssh #{HOST_SLAVE2} -p #{PORT_SSH_SLAVE2} yum -y install ruby`
+    end
+    
+    if options[:install]
+      if options[:init]
+        puts "Installation de PostgreSQL…"
+        if options[:compile]
+          system("ssh #{HOST_SLAVE2} -p #{PORT_SSH_SLAVE2} ruby #{INSTALL_FOLDER}/init_psql.rb")
+        else
+          system("ssh #{HOST_SLAVE2} -p #{PORT_SSH_SLAVE2} ruby #{INSTALL_FOLDER}/init_psql.rb --no-compile")
+        end
+      end
+      puts "Envoi de la clé SSH commune au serveur esclave"
+      `scp -P #{PORT_SSH_SLAVE2} #{INSTALL_FOLDER}/ssh/id_rsa #{HOST_SLAVE2}:#{PSQL_FOLDER}/.ssh/` 
+      `scp -P #{PORT_SSH_SLAVE2} #{INSTALL_FOLDER}/ssh/id_rsa.pub #{HOST_SLAVE2}:#{PSQL_FOLDER}/.ssh/` 
+      `ssh #{HOST_SLAVE2} -p #{PORT_SSH_SLAVE2} 'cp #{PSQL_FOLDER}/.ssh/id_rsa.pub #{PSQL_FOLDER}/.ssh/authorized_keys; chown -R postgres:postgres #{PSQL_FOLDER}/.ssh'`
+    end
+  }
+end
+
 
 if options[:master]
   master = Thread.new() {
@@ -257,10 +320,13 @@ if options[:master]
         replace = File.read(file_name)
         replace = replace.gsub(/HOST_MASTER/, HOST_MASTER)
         replace = replace.gsub(/PORT_PSQL_MASTER/, PORT_PSQL_MASTER)
+        replace = replace.gsub(/PORT_SSH_SLAVE2/, PORT_SSH_SLAVE2)
         replace = replace.gsub(/PORT_SSH_SLAVE/, PORT_SSH_SLAVE)
         replace = replace.gsub(/PSQL_USER/, PSQL_USER)
+        replace = replace.gsub(/HOST_SLAVE2_IP/, HOST_SLAVE2_IP)
         replace = replace.gsub(/HOST_SLAVE_IP/, HOST_SLAVE_IP)
         replace = replace.gsub(/HOST_PGPOOL_IP/, HOST_PGPOOL_IP)
+        replace = replace.gsub(/HOST_SLAVE2/, HOST_SLAVE2)
         replace = replace.gsub(/HOST_SLAVE/, HOST_SLAVE)
         replace = replace.gsub(/PSQL_FOLDER/, PSQL_FOLDER)
         replace = replace.gsub(/SYNC_MASTER/, SYNC_MASTER)
@@ -272,6 +338,10 @@ if options[:master]
     
   if options[:slave]
     slave.join
+  end
+
+  if options[:slavebis]
+    slavebis.join
   end
   
   masterConfig = Thread.new {
@@ -303,11 +373,14 @@ slaveConfig = Thread.new {
         replace = replace.gsub(/HOST_PGPOOL_IP/, HOST_PGPOOL_IP)
         replace = replace.gsub(/HOST_MASTER/, HOST_MASTER)
         replace = replace.gsub(/PORT_PSQL_MASTER/, PORT_PSQL_MASTER)
+        replace = replace.gsub(/PORT_PSQL_SLAVE2/, PORT_PSQL_SLAVE2)
         replace = replace.gsub(/PORT_PSQL_SLAVE/, PORT_PSQL_SLAVE)
+        replace = replace.gsub(/PORT_SSH_SLAVE2/, PORT_SSH_SLAVE2)
         replace = replace.gsub(/PORT_SSH_SLAVE/, PORT_SSH_SLAVE)
         replace = replace.gsub(/PSQL_USER/, PSQL_USER)
         replace = replace.gsub(/PSQL_FOLDER/, PSQL_FOLDER)
         replace = replace.gsub(/HOT_STANDBY_SLAVE/, HOT_STANDBY_SLAVE)
+        replace = replace.gsub(/SYNC_MASTER/, SYNC_MASTER)
         File.open(file_name, "w") { |file| file.puts replace }
         
         `scp -P #{PORT_SSH_SLAVE} #{file_name} #{HOST_SLAVE}:#{PSQL_FOLDER}/conf/#{File.basename(file_name)}`
@@ -319,8 +392,46 @@ slaveConfig = Thread.new {
   end
 }
 
+slavebisConfig = Thread.new {
+  if options[:slavebis]
+    if options[:config]     
+      puts "Réécriture des fichiers de configuration PostgreSQL…"
+      FileUtils.cp(INSTALL_FOLDER+'/slave/postgresql.conf.template',INSTALL_FOLDER+'/slave/postgresql.conf')
+      FileUtils.cp(INSTALL_FOLDER+'/slave/pg_hba.conf.template',INSTALL_FOLDER+'/slave/pg_hba.conf')
+      FileUtils.cp(INSTALL_FOLDER+'/slave/recovery.conf.template',INSTALL_FOLDER+'/slave/recovery.conf')
+      file_names = [INSTALL_FOLDER+'/slave/postgresql.conf', INSTALL_FOLDER+'/slave/pg_hba.conf', INSTALL_FOLDER+'/slave/recovery.conf']
+      
+      file_names.each do |file_name|
+        replace = File.read(file_name)
+        replace = replace.gsub(/HOST_MASTER_IP/, HOST_MASTER_IP)
+        replace = replace.gsub(/HOST_PGPOOL_IP/, HOST_PGPOOL_IP)
+        replace = replace.gsub(/HOST_MASTER/, HOST_MASTER)
+        replace = replace.gsub(/PORT_PSQL_MASTER/, PORT_PSQL_MASTER)
+        replace = replace.gsub(/PORT_PSQL_SLAVE2/, PORT_PSQL_SLAVE2)
+        replace = replace.gsub(/PORT_PSQL_SLAVE/, PORT_PSQL_SLAVE)
+        replace = replace.gsub(/PORT_SSH_SLAVE2/, PORT_SSH_SLAVE2)
+        replace = replace.gsub(/PORT_SSH_SLAVE/, PORT_SSH_SLAVE)
+        replace = replace.gsub(/PSQL_USER/, PSQL_USER)
+        replace = replace.gsub(/PSQL_FOLDER/, PSQL_FOLDER)
+        replace = replace.gsub(/HOT_STANDBY_SLAVE/, HOT_STANDBY_SLAVE)
+        replace = replace.gsub(/SYNC_MASTER/, SYNC_MASTER)
+        File.open(file_name, "w") { |file| file.puts replace }
+        
+        `scp -P #{PORT_SSH_SLAVE2} #{file_name} #{HOST_SLAVE2}:#{PSQL_FOLDER}/conf/#{File.basename(file_name)}`
+      end
+      
+      puts "Configuration du serveur esclave…"
+      system("ssh #{HOST_SLAVE2} -p #{PORT_SSH_SLAVE2} ruby #{INSTALL_FOLDER}/slave.rb")
+    end
+  end
+}
+
 if options[:slave]
   slaveConfig.join
+end
+
+if options[:slavebis]
+  slavebisConfig.join
 end
 
 
@@ -340,7 +451,9 @@ if options[:pgpool]
         replace = File.read(file_name)
         replace = replace.gsub(/HOST_MASTER_IP/, HOST_MASTER_IP)
         replace = replace.gsub(/PORT_PSQL_MASTER/, PORT_PSQL_MASTER)
+        replace = replace.gsub(/PORT_PSQL_SLAVE2/, PORT_PSQL_SLAVE2)
         replace = replace.gsub(/PORT_PSQL_SLAVE/, PORT_PSQL_SLAVE)
+        replace = replace.gsub(/HOST_SLAVE2_IP/, HOST_SLAVE2_IP)
         replace = replace.gsub(/HOST_SLAVE_IP/, HOST_SLAVE_IP)
         replace = replace.gsub(/PSQL_FOLDER/, PSQL_FOLDER)
         replace = replace.gsub(/PGPOOL_FOLDER/, PGPOOL_FOLDER)

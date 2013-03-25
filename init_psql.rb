@@ -17,6 +17,12 @@ OptionParser.new do |opts|
   end
 end.parse!
 
+
+# Queques prérequis…
+
+system("iptables -F")
+system("setenforce 0")
+
 # Téléchargement, configuration et installation de PostgreSQL
 
 puts "Création du répertoire initial de PostgreSQL…"
@@ -25,6 +31,10 @@ puts "Création du répertoire initial de PostgreSQL…"
 FileUtils.mkdir_p(PSQL_FOLDER+"/conf") if not FileTest.directory?(PSQL_FOLDER)
 FileUtils.mkdir_p(PSQL_FOLDER+"/src") if not FileTest.directory?(PSQL_FOLDER+"/src")
 if `hostname`.strip == HOST_SLAVE
+  FileUtils.mkdir_p(PSQL_FOLDER+'/'+HOST_MASTER) if not FileTest.directory?(PSQL_FOLDER+'/'+HOST_MASTER)
+end
+
+if `hostname`.strip == HOST_SLAVE2
   FileUtils.mkdir_p(PSQL_FOLDER+'/'+HOST_MASTER) if not FileTest.directory?(PSQL_FOLDER+'/'+HOST_MASTER)
 end
 
@@ -89,6 +99,7 @@ if `hostname`.strip == HOST_PGPOOL
     `tar xzf #{PGPOOL_ARCHIVE} --strip-components 1`
     
     puts "Pré-requis pour la compilation…"
+    system("yum -y install make gcc readline-devel zlib-devel")
     
     system("./configure --with-pgsql-includedir=#{PSQL_FOLDER}/include/ --with-pgsql-libdir=#{PSQL_FOLDER}/lib/ --prefix=#{PGPOOL_FOLDER}")
     puts "Compilation…"

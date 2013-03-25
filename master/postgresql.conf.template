@@ -190,7 +190,7 @@ synchronous_commit = SYNC_MASTER	# synchronization level;
 
 archive_mode = on		# allows archiving to be done
 				# (change requires restart)
-archive_command = 'scp -o StrictHostKeychecking=no -P PORT_SSH_SLAVE %p PSQL_USER@HOST_SLAVE_IP:PSQL_FOLDER/HOST_MASTER/%f'	# command to use to archive a logfile segment
+archive_command = 'scp -o StrictHostKeychecking=no -P PORT_SSH_SLAVE2 %p PSQL_USER@HOST_SLAVE2_IP:PSQL_FOLDER/HOST_MASTER/%f && scp -o StrictHostKeychecking=no -P PORT_SSH_SLAVE2 %p PSQL_USER@HOST_SLAVE2_IP:PSQL_FOLDER/HOST_MASTER/%f'	# command to use to archive a logfile segment
 				# placeholders: %p = path of file to archive
 				#               %f = file name only
 				# e.g. 'test ! -f /mnt/server/archivedir/%f && cp %p /mnt/server/archivedir/%f'
@@ -215,7 +215,7 @@ max_wal_senders = 10		# max number of walsender processes
 
 # These settings are ignored on a standby server.
 
-synchronous_standby_names = '*'  # standby servers that provide sync rep
+synchronous_standby_names = ''  # standby servers that provide sync rep
 				# comma-separated list of application_name
 				# from standby(s); '*' = all
 #vacuum_defer_cleanup_age = 0	# number of xacts by which cleanup is delayed
