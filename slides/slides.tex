@@ -1,0 +1,352 @@
+\documentclass[utf8]{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usetheme{Warsaw}
+%\useoutertheme{infolines}
+
+\title{Clustering de Bases de Données}
+\author{S. Trémoureux, H. Blanchard, S. Vernotte}
+\institute{IUT Nancy-Chalemagne}
+\date{27 mars 2013}
+
+\defbeamertemplate*{footline}{shadow theme}
+{%
+  \leavevmode%
+  \hbox{\begin{beamercolorbox}[wd=.5\paperwidth,ht=2.5ex,dp=1.125ex,leftskip=.3cm plus1fil,rightskip=.3cm]{author in head/foot}%
+    \usebeamerfont{author in head/foot}\insertframenumber\,/\,\inserttotalframenumber\hfill\insertshortauthor
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.5\paperwidth,ht=2.5ex,dp=1.125ex,leftskip=.3cm,rightskip=.3cm plus1fil]{title in head/foot}%
+    \usebeamerfont{title in head/foot}\insertshorttitle%
+  \end{beamercolorbox}}%
+  \vskip0pt%
+}
+
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\section*{Sommaire}
+\begin{frame}
+  \tableofcontents
+\end{frame}      
+
+\section{Le clustering — terminologie utile}
+
+\subsection{Définitions}
+
+\begin{frame}
+  \frametitle{Termes courants}
+
+  \begin{itemize}
+  \item Actif/passif
+  \item Actif/actif
+  \item Journaux de transactions
+  \item Warm standby
+  \item Hot standby  
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Propriétés ACID}
+
+  \begin{itemize}
+  \item Atomicité
+  \item Cohérence
+  \item Isolation
+  \item Durabilité
+  \end{itemize}
+\end{frame}
+
+\subsection{Différents types de réplication}
+
+\begin{frame}
+  \frametitle{Réplication} 
+
+  \begin{itemize}
+  \item Définition
+  \end{itemize}
+  
+  \begin{itemize}
+  \item Réplication asynchrone
+  \begin{itemize}
+    \item Asymétrique
+    \item Symétrique
+  \end{itemize}
+  \end{itemize}
+
+  \begin{itemize}
+  \item Réplication synchrone
+  \begin{itemize}
+    \item Asymétrique
+    \item Symétrique
+  \end{itemize}
+    
+  \end{itemize}
+\end{frame}
+
+\subsection{La haute disponibilité et le failover}
+\begin{frame}
+  \frametitle{La haute disponibilité et le failover}
+
+  \begin{itemize}
+  \item Cluster haute disponibilité
+  \item Cluster à répartition de charge
+  \end{itemize}
+\end{frame}
+
+
+\section{Bucardo}
+
+\subsection{Identité}
+
+\begin{frame}
+  \frametitle{Identité}
+  \begin{itemize}
+  \item Projet né d'une demande de développement spécifique
+  \item Outil développé par End Point au US
+  \item Mis en production à partir de 2002
+  \item Ré-écrit en 2006
+  \item En fonction chez Backcountry depuis 2006
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Identité}
+  \begin{itemize}
+  \item Projet BSD depuis 2007 en version 3.0.6
+  \item Greg Sabino Mulane est l'un des principaux contributeurs
+  \item Bucardo en version 4.5 à ce jour
+  \item Une version 4.99 préfigure une version 5 à venir
+  \end{itemize}
+\end{frame}
+
+\subsection{Tour d'horizon}
+
+
+\begin{frame}
+  \frametitle{Fonctionnement}
+
+  \begin{itemize}
+  \item Système de réplication asynchrone – symétrique
+  \item Granularité au niveau ligne de table ou séquence
+  \item S'appuie sur les déclencheurs pour engendrer ses actions
+  \item Consigne tous les changements au niveau ligne
+  \item Pré-requis Bucardo sont communs
+  \end{itemize}
+\end{frame}
+  
+
+\begin{frame}
+  \frametitle{Pré-requis techniques}
+
+  \begin{itemize}
+  \item Postgresql 8.3 ou ultérieur
+  \item Perl et quelques packages, DBD-pg, DBI et DBIx-safe
+  \item pl/pgsql intégré à Postgresql
+  \item pl/perl-U intégré à Postgresql
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Mode d'action}
+
+  \begin{itemize}
+  \item Démons écrits en Perl
+  \item Démon principal : contrôleur maître
+  \item Contrôleurs secondaires par synchronisation
+  \item Démons de mise en action des synchronisations
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Possibilités} 
+
+  \begin{itemize}
+  \item Synchronisation maître/esclave
+  \item Usage de plusieurs esclaves, il est 'multi-slave'
+  \item S'appuie sur des ordres de type 'fullcopy' ou 'pushdelta'
+  \item Migration de bases envisageable et assez simple
+  \item Pas de réplication de type 'Hot Standby'
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Possibilités (suite)} 
+
+  \begin{itemize}
+  \item Synchronisation maître/maître
+  \item Ordres de type 'swap'
+  \item Résolution standard des conflits d'écriture
+  \item Pas de répartition de charge
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Possibilités (suite)} 
+
+  \begin{itemize}
+  \item Limité à deux noeuds en master/master
+  \item Déployable qu'en environnement Unix
+  \item Pas de réplication de requêtes DDL
+  \item Pas de pooling de connexions
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Architecture} 
+
+  \begin{itemize}
+  \item Architecture flexible
+  \item Maître, esclave et contrôleur Bucardo dans la même infrastructure
+  \item Contrôleur et maître ou esclave dans des infrastructures différentes
+  \end{itemize}
+\end{frame}
+
+
+\subsection{Installation et mise en route}
+
+\begin{frame}
+  \frametitle{Installation} 
+
+  \begin{itemize}
+  \item Intégration bucardo simplicime : bucardo\_ctl install
+  \item Préparation du maître facile : bucardo\_ctl add (db \& all tables)
+  \item Preparation de l'hôte esclave tout aussi facile
+  \item Vérification des paramètres : bucardo\_ctl validate all
+  \end{itemize}
+\end{frame}
+
+
+
+\begin{frame}
+  \frametitle{Mise en route} 
+
+  \begin{itemize}
+  \item Création des set de réplication incroyablement intelligibles
+  \item Type 'fullcopy' : bucardo\_ctl add sync copyall source= targetdb= type=
+  \item Type 'pushdelta' : bucardo\_ctl add sync delta source= targetdb= type=
+  \item Type 'swap' : bucardo\_ctl add sync 2ways source= targetdb= type=
+  \item Puis bucardo\_ctl start et les triggers sont installés
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Maintenance} 
+
+  \begin{itemize}
+  \item langage de commande assez complet, accessible au niveau du shell
+  \item bucardo\_ctl status
+  \item bucardo\_ctl list db, herd, sync, dbgroup, tables
+  \item bucardo\_ctl reload syncname
+  \end{itemize}
+\end{frame}
+
+
+\subtitle{Intégration}
+
+\begin{frame}
+  \frametitle{Intégration} 
+  \begin{itemize}
+  \item Bucardo, HA et pooling de connexions
+  \item Haproxy
+  \item pgBouncer
+  \item anti-spof, heartbeat
+  \end{itemize}
+\end{frame}
+
+
+\section{pgPool}
+
+\subtitle{Identité}
+
+\begin{frame}
+  \frametitle{Identité} 
+  \begin{itemize}
+  \item Middleware
+  \item Licence BSD
+  \item Développé par Tatsuo Ishii
+  \item Grande longévité, développement actif
+  \end{itemize}
+\end{frame}
+
+\subsection{Fonctionnalités}
+
+\begin{frame}
+  \frametitle{Fonctionnalités}
+  
+  Un grand nombre de fonctionnalités : 
+
+  \begin{itemize}
+  \item pooling de connexions
+  \item load balancing
+  \item parallélisation des requêtes
+  \item failover et failback
+  \end{itemize}
+\end{frame}
+  
+\begin{frame}
+  \begin{itemize}
+  \item système de cache mémoire
+  \item réplication native
+  \item réplication maître/esclave : par Slony ou par streaming replication
+  \end{itemize}
+\end{frame}
+
+\subsection{Réplication par transfert de journaux} 
+
+\begin{frame}
+  \frametitle{Réplication par transfert de journaux}
+
+  \begin{itemize}
+    \item Fonctionnalité récente (9.0) de PGSQL
+    \item Utilisation des journaux de transactions
+    \item Envoi aux serveurs esclaves (log-shipping)
+    \item Connexion directe (streaming replication)
+    \item Maître en « hot standby », esclave en « recovery »
+  \end{itemize}
+\end{frame}
+
+\subsection{Configuration}
+
+\begin{frame}
+  \frametitle{Configuration de pgPool}
+
+  \begin{itemize}
+    \item Mode maître-esclave
+    \item Au dessus d'une architecture déjà en place
+    \item Philosophie UNIX
+  \end{itemize}
+\end{frame}
+
+\section{Conclusion}
+
+\begin{frame}
+  \frametitle{Conclusion}
+
+  \begin{itemize}
+    \item Différentes solutions pour des approches différentes
+    \item Logiciels pas si similaires
+    \item Comparaison avec Oracle
+    \item Et le libre dans tout ça ?
+  \end{itemize}
+\end{frame}
+
+\section{Démonstrations}
+
+\begin{frame}
+  \frametitle{Démonstrations}
+
+  \begin{itemize}
+    \item Bucardo
+    \item …pgpool
+  \end{itemize}
+\end{frame}
+
+\end{document}
