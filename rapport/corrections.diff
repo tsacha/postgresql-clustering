@@ -1,0 +1,400 @@
+110,111c110,111
+< négligeables. Les établissements bancaires également ont besoin en permanence
+< d'accéder à leurs données, et que dire de leurs clients qui à 1h00 ou à 13h00
+---
+> négligeables. Les établissements bancaires ont également besoin
+> d'accéder en permanence à leurs données, et que dire de leurs clients qui à 1h00 ou à 13h00
+149c149
+< allons essayer de donner quelques élément de réponses  au travers des pages qui
+---
+> allons essayer de donner quelques éléments de réponse  au travers des pages qui
+154d153
+< 
+156,243d154
+< 
+< \subsection{Actif/Passif}
+< 
+< Un nœud est désigné maitre, il gère le service et tout ce qui ce passe sur lui
+< est répliquer sur le nœud désigné esclave. \\
+< 
+< Si le nœud maitre tombe, l’esclave prend le relais. Lorsque le nœud anciennement
+< maître du cluster sera de nouveau opérationnel, il sera désigné comme esclave. \\ 
+< 
+< \textbf{Terminologie :} chaque machine du cluster est appelé un Node ou un Nœud.
+< 
+< \subsection{Actif/Actif}
+< 
+< Dans ce cas il n'y a pas de notion de matre/esclave les nœuds fonctionnent
+< ensemble et les charges sont réparties sur chaque nœud. \\
+< 
+< Si un nœud tombe toute la charge retombe sur l'autre. \\
+< 
+< \subsection{Journaux de transactions}
+< 
+< Chaque transaction réalisant des modifications sur la structure ou les données
+< d'une base est tracée dans les journaux de transactions qui contiennent des
+< informations de bas niveau (comme les blocs modifiés sur un fichier) et non la
+< requête elle même. \\
+< 
+< Les journaux de transactions sont valables pour toutes les bases de données de
+< l'instance et sont utilisé en cas de crash du serveur. Lors du redémarrage,
+< PostgreSQL rejoue les transactions qui n'auraient pas été synchronisées sur les
+< fichiers de données. \\
+< 
+< 
+< \subsection{Warm Standby}
+< 
+< C’est un système de réplication complet qui lorsque que le serveur maître a
+< terminé de travailler sur un journal de transactions, l’archive sur un second
+< serveur où il sera récupéré par le serveur PostgreSQL esclave et rejoué dès la
+< fin de la copie. \\
+< 
+< Deux inconvénients : \\
+< 
+< \begin{itemize}
+< 
+< \item Le délai de prise en compte des modifications dépend de l'activité du serveur
+< maître (plus ce dernier sera actif, plus il enverra rapidement un journal de
+< transactions, plus le serveur esclave sera à jour).
+< \item Le serveur esclave n'est pas disponible, y compris pour des requêtes en
+<   lecture seule. 
+< \end{itemize}
+< 
+< Cette technique ne permet de répliquer que l’ensemble des bases de données du
+< cluster.\\
+< 
+< Cette limitation est liée au fait que les journaux de transactions de PostgreSQL
+< (aka WALs) tracent toutes les transactions du cluster, quelle que soit la base
+< de données.\\
+<  
+< 
+< \subsection{Hot Standby}
+< 
+< C'est une évolution du Warm Standby. Les serveurs esclaves sont désormais
+< ouverts aux lectures. Ce qui permet aux utilisateurs de PostgreSQL de pouvoir
+< effectuer des SELECT sur plusieurs répliques de la base PostgreSQL, sans avoir à
+< utiliser un outil tiers, comme Slony.\\
+< 
+<  Charge à l'application de diriger les requêtes en lecture seule sur l'un ou
+<  l'autre des esclaves. \\
+< 
+< 
+< \subsection{Propriétés ACID}
+< 
+< 
+< Les propriétés ACID (atomicité, cohérence, isolation et durabilité) sont un
+< ensemble de propriétés qui garantissent qu'une transaction est exécutée de façon
+< fiable.\\
+< 
+< L’atomicité c’est assurance qu'une transaction se fait au complet ou pas du tout
+< La cohérence c’est assurance que chaque transaction amènera le système d'un état
+< valide à un autre état valide.\\
+< 
+< L’isolation c’est assurance que l'exécution simultanée de transactions produit
+< le même état que celui qui serait obtenu par l'exécution en série des
+< transactions.\\
+< 
+< La durabilité c’est assurance que lorsqu’une transaction a été confirmée, elle
+< demeure enregistrée même à la suite d'une panne d'électricité, d'un
+< disfonctionnement de l'ordinateur ou d'un autre problème.
+< 
+< 
+245,311d155
+< 
+< 
+< \subsection{Définition}
+< 
+< La réplication a pour principal but d’avoir un second serveur, sur lequel
+< travailler en cas de panne du premier. De cette manière l'activité n’est pas
+< impactée par la perte d'un serveur.\\
+< 
+< Le serveur secondaire peut aussi servir à y déporter une partie du travail afin
+< d'alléger la charge du serveur principal. Pour cela, plusieurs types de
+< réplication existent.\\
+< 
+< \subsection{Asynchrone}
+< 
+< \subsubsection{Asymétrique}
+< 
+< Un serveur maitre est en lecture/écriture alors que le ou les serveurs esclave
+< ne sont disponibles qu’en lecture. \\
+< 
+< Tout enregistrement fait sur le maître n'est pas immédiatement reporté sur
+< l'esclave et c’est un processus extérieur au SGBD qui gère la réplication. \\
+< 
+< Si le serveur maître tombe en panne avant de transférer les dernières
+< transactions au(x) serveur(s) esclave(s), les données de ces transactions y
+< seront absentes. \\
+< 
+< La réplication interne de PostgreSQL , Slony, Londiste… permettent de mettre en
+< place ce type de réplication.\\
+< 
+< \subsubsection{Symétrique}
+< 
+< Les serveurs sont tous en lecture/écriture. Il faut donc pouvoir gérer les
+< conflits causés par la mise à jour des mêmes objets sur plusieurs serveurs en
+< même temps. Cela complexifie de beaucoup le respect de la norme ACID car si une
+< copie échoue alors que la transaction a déjà été validée, on peut alors arriver
+< dans une situation où les données sont incohérentes entre les serveurs. \\
+< 
+< Bucardo implémente ce type de système sur deux serveurs uniquement. \\
+< 
+< \subsection{Synchrone}
+< 
+< \subsubsection{Asymétrique}
+< 
+< Il n'y a qu'un seul maître mais chaque modification réalisée sur le maître doit
+< être enregistrée sur l'esclave avant de redonner la main à l'utilisateur. Ce qui
+< est source de lenteurs car deux systèmes enregistre l'information au lieu d'un
+< seul  (plus lags réseau possibles) cependant cela permet de ne pas perdre de
+< donnée en cas d’arrêt du maître. \\
+< 
+< Cela ne résout pas pour autant tous les problèmes car cette solution garantit
+< seulement que les données est enregistrées sur les esclaves, pas qu’elles soient
+< visible. Donc en cas de répartition de charge, il est possible qu'une lecture du
+< maître et de l'esclave ne donnent pas le même résultat. \\
+< 
+< La réplication interne de PostgreSQL propose cette méthode, pgPool-II le propose
+< également via son mode de réplication. \\
+< 
+< \subsubsection{Symétrique}
+< 
+< Ce mode de réplication est le plus complexe et le plus lent. La complexité est
+< due à la gestion des conflits, inévitable quand il y a plusieurs serveurs
+< maîtres. La lenteur est due au côté synchrone du système.
+< 
+< À ce jour, Postgres-XC est le projet le plus sérieux de réplication synchrone
+< symétrique pour PostgreSQL.
+< 
+< 
+314,343d157
+< \subsection{Cluster Haute Disponibilité (fail over)}
+< 
+< Les clusters dits à haute disponibilité ont été créés pour prévenir contre les
+< failles hardware et software d'une seule machine.
+< 
+< Ainsi, dans ce type de système, si le nœud primaire (ou maitre) venait à
+< rencontrer une défaillance, il sera immédiatement remplacé par le nœud
+< secondaire (esclave), mis en état de "sommeil" en attendant. Typiquement, ce
+< second nœud n'est ni plus ni moins qu'une image exacte du nœud primaire et ceci
+< afin qu'il puisse usurper l'identité du primaire et garder ainsi l'environnement
+< inchangé pour un utilisateur extérieur. 
+< 
+< \subsection{Cluster à répartition de charge (load balancing)}
+< 
+< Les systèmes à répartition de charge permettent de distribuer l'exécution de
+< processus systèmes ou réseaux à travers les nœuds du cluster. \\
+< 
+< Le nœud server se voit ainsi attribuer la tâche de réceptionner le processus et
+< de le répartir sur la machine adéquate. Cette dernière est en fait choisie car
+< sa charge est faible et donc elle peut traiter le processus entrant de manière
+< quasi instantanée. Elle peut aussi être choisie en fonction de sa
+< spécialisation. \\
+< 
+< Ces systèmes requièrent des applications qui examinent la charge courante des
+< nœuds et déterminent quel nœud pourra résoudre de nouvelles requêtes. Ainsi,
+< chaque machine se verra attribuer un processus et donc la qualité de service
+< rendu s'en trouvera meilleure. De plus, il évite les surcharges que peut subir
+< une seule machine destinée à répondre aux requêtes du réseau. \\
+< 
+< 
+411c225
+< solutions pour parvenir à la mise en eouvre de “High Availability”, notamment
+---
+> solutions pour parvenir à la mise en oeuvre de “High Availability”, notamment
+453c267
+< “asynchrone-symétrique“. En réalité, tout le principe de réplicataion de Bucardo
+---
+> “asynchrone-symétrique“. En réalité, tout le principe de réplication de Bucardo
+455c269
+< par où commencer, peut être par l'installation. Voici donc un résumé de
+---
+> par où commencer, peut-être par l'installation. Voici donc un résumé de
+474c288
+< perl-U étant la version non bridée du langage perl pour postgresql, c'est à dire
+---
+> perl-U étant la version non bridée du langage perl pour postgresql, c'est-à-dire
+534c348
+< importance qu'il est bon de connaître afin d'avoir une vue d'ensemble de tous
+---
+> importante qu'il est bon de connaître afin d'avoir une vue d'ensemble de tous
+591c405
+< information utiles à la réplication, à savoir la localisation des bases sur le
+---
+> les informations utiles à la réplication, à savoir la localisation des bases sur le
+614c428
+< d'ailleurs pourquoi on parle de liaisons asynchrone dans la réplication, car
+---
+> d'ailleurs pourquoi on parle de liaisons asynchrones dans la réplication, car
+616c430
+< répliquées, les transactions sur les données de la base test1 ont déjà eu
+---
+> répliqués, les transactions sur les données de la base test1 ont déjà eu
+625c439
+< de configuration de nos replications, et également des tables nécessaires au
+---
+> de configuration de nos réplications, et également des tables nécessaires au
+627c441
+< des réplication qui ont eu lieu, une ligne par action, avec des infos comme le
+---
+> des réplications qui ont eu lieu, une ligne par action, avec des infos comme le
+631c445
+< Enfin, on note la présence de déclencheurs qui, eux aussi, sont soit écrit en
+---
+> Enfin, on note la présence de déclencheurs qui, eux aussi, sont soit écrits en
+677c491
+< intégrale des tables concernées plutôt que la simple recopie des données
+---
+> intégrale des tables concernées plutôt que la simple copie des données
+719c533
+< gestion en mode 'fullcopy', avec les contraintes que ça implique, comme on l'a
+---
+> gestion en mode 'fullcopy', avec les contraintes que ça impliquent, comme on l'a
+747c561
+< Nos trois mécanismes  de réplication viennent d'être présentées, et à présent,
+---
+> Nos trois mécanismes  de réplication viennent d'être présentés, et à présent,
+782c596
+< où test1 est le nom de notre base de données, vous l'aurai sans doute déjà
+---
+> où test1 est le nom de notre base de données, vous l'auriez sans doute déjà
+802,803c616,617
+< elle est le reflet des transcations effectuées sur les autres tables, c'est un
+< historique en fait. Elle peut toutefois contenir un grand nombre de lignes. \\
+---
+> elle est le reflet des transactions effectuées sur les autres tables, c'est un
+> historique, en fait. Elle peut toutefois contenir un grand nombre de lignes. \\
+809,810c623,624
+< elle est le reflet des transcations effectuées sur les autres tables, c'est un
+< historique en fait. Elle peut toutefois contenir un grand nombre de lignes. \\
+---
+> elle est le reflet des transactions effectuées sur les autres tables, c'est un
+> historique, en fait. Elle peut toutefois contenir un grand nombre de lignes. \\
+850,851c664,665
+< je demande à bucardo ajouter la base test1 située sur le host 10.11.12.24x,
+< accessible par le port 5432 et cette base de donnée est baptisé test1\_master ou
+---
+> je demande à bucardo d'ajouter la base test1 située sur le host 10.11.12.24x,
+> accessible par le port 5432 et cette base de données est baptisée test1\_master ou
+853c667
+< précise pas mais l'utilisateur par défaut est 'bucardo' et dans notre cas, il
+---
+> précise pas, mais l'utilisateur par défaut est 'bucardo' et dans notre cas, il
+984c798
+< tirs de requêtes sur notre serveur maitre, afin de voir si la réplication se
+---
+> tirs de requêtes sur notre serveur maître, afin de voir si la réplication se
+1012c826
+< lorsque l'on observe le nombre de transaction par seconde, autrement dit, les
+---
+> lorsque l'on observe le nombre de transactions par seconde, autrement dit, les
+1016c830
+< connexions, afin de rendre persistentes les connexions pour un même client, ce
+---
+> connexions, afin de rendre persistantes les connexions pour un même client, ce
+1059c873
+< nombre de transaction effectuées sur la base : \\
+---
+> nombre de transactions effectuées sur la base : \\
+1143c957
+< Puisque nous sommes prévoyants, notre deuxième machine maitre aussi nommé
+---
+> Puisque nous sommes prévoyants, notre deuxième machine maître aussi nommée
+1177c991
+< d'ailleurs, avez-vous remarqué dans quelle table de Bucardo sont stockés les
+---
+> d'ailleurs, avez-vous remarqué dans quelle table de Bucardo sont stockées les
+1208c1022
+< véritable réplicataion de nos deux hosts master et master-2.\\
+---
+> véritable réplication de nos deux hosts master et master-2.\\
+1237c1051
+< réplication, et s'il s'agit d'un entier suppérieur à 0 strictement, il devient
+---
+> réplication, et s'il s'agit d'un entier strictement supérieur à 0, il devient
+1472c1286
+< relais. Ces machines de secours ne mode backup pourraient être plus nombreuses
+---
+> relais. Ces machines de secours en mode backup pourraient être plus nombreuses
+1477c1291
+< l'un deux pourrait reprendre la place d'un backup et l'autre la place de maitre.\\
+---
+> l'un deux pourrait reprendre la place d'un backup et l'autre la place de maître.\\
+1480c1294
+< d'un pur travail d'adminitrateur que de prévoir des procédures PRA ou PCA.\\
+---
+> d'un pur travail d'administrateur que de prévoir des procédures PRA ou PCA.\\
+1484c1298
+< n'exclue non plus d'utiliser d'autres méthodes surtout si l'on utilise des
+---
+> n'exclut non plus d'utiliser d'autres méthodes surtout si l'on utilise des
+1600c1414
+< charge, mais surtout, le gros intérêt est que nous pouvons effectuer des tir
+---
+> charge, mais surtout, le gros intérêt est que nous pouvons effectuer des tirs
+1617c1431
+< persistence des connexions clients et désormais, cela signifie qu'il faut
+---
+> persistance des connexions clients et désormais, cela signifie qu'il faut
+1620c1434
+< qui concerne le cluster, il sera toujours attaquer par l'adresse de  haproxy, à
+---
+> qui concerne le cluster, il sera toujours attaqué par l'adresse de  haproxy, à
+1680c1494
+< favorablement réponde à des besoins relativement conséquents en terme de
+---
+> favorablement répondre à des besoins relativement conséquents en terme de
+1689c1503
+< sauvage des Pyrénées qui a totalement disparue dans les années 2000, et dont on
+---
+> sauvage des Pyrénées qui a totalement disparu dans les années 2000, et dont on
+1706c1520
+< Il est greffé par-dessus d'un serveur PostgreSQL et est de préférable situé sur
+---
+> Il est greffé par-dessus d'un serveur PostgreSQL et est de préférence situé sur
+1723,1726c1537
+< 
+< Dans le cadre de notre projet, seules quelques fonctionnalités parmi l'ensemble
+< disponibles ont été utilisées en pratiques. Nous allons cependant brièvement
+< faire le tour de la totalité des possibilités de pgPool. \\
+---
+> Pour résumer, pgPool dispose de fonctions de : \\
+1731c1542
+< \item parallélisation des requêtes : les opérations de sélections peuvent être
+---
+> \item parallélisation des requêtes : les opérations de sélection peuvent être
+1737,1740c1548,1549
+< \item système de cache mémoire : les résultats des requêtes identiques peuvent
+<   être renvoyés sans aucune interrogation à la base de donnée.
+< \item réplication native : les requêtes de modification sont interceptées par
+<   pgPool et répliquées sur les nœuds composants le cluster.
+---
+> \item système de cache mémoire : 
+> \item réplication native
+1742,1743c1551
+<   streaming replication, soit Slony — un logiciel externe de réplication
+<   maître/esclave —
+---
+>   streaming replication, soit Slony — un logiciel externe de réplication maître/esclave
+1745a1554,1556
+> Dans le cadre de notre projet, seules quelques fonctionnalités parmi l'ensemble
+> disponibles ont été utilisées en pratiques. Nous allons cependant brièvement
+> faire le tour de la totalité des possibilités de pgPool. \\
+1812,1813c1623,1624
+< Le conteneur est découpé de façon à accorder 30gb au système hôte, et 30gb par machines
+< virtuelles. Les système de fichier choisi initialement pour l’ensemble des partitions
+---
+> Le conteneur est découpé de façon à accorder 30gb au système hôte, et 30gb par machine
+> virtuelle. Les système de fichier choisi initialement pour l’ensemble des partitions
+1819c1630
+< interface physique eth0. Le bridge est présent uniquement en cas de besoins immédiats
+---
+> interface physique eth0. Le bridge est présent uniquement en cas de besoin immédiat
+1828c1639
+< La sécurité de l'architecture n'étant pas au cœur du sujet, nous avons, comme
+---
+> La sécurité de l'architecture n'étant pas au cœur du sujet, nous avons décidé, comme
+2009c1820
+< falloir sans cesse optimiser selon  ses besoins. PgPool dispose en effet d'un
+---
+> falloir sans cesse optimiser selon ses besoins. PgPool dispose en effet d'un
